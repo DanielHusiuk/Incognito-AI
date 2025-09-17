@@ -33,10 +33,11 @@ class MessagesViewController: UIViewController {
         closeButton.setTitleColor(.white, for: .normal)
         closeButton.titleLabel?.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
         closeButton.titleLabel?.textAlignment = .center
-        closeButton.backgroundColor = .lightGray
-        closeButton.layer.borderColor = UIColor.systemGray3.cgColor
+        closeButton.backgroundColor = #colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1)
+        closeButton.layer.borderColor = #colorLiteral(red: 0.2567243651, green: 0.5657354798, blue: 0.4573884009, alpha: 1)
         closeButton.layer.borderWidth = 2
         closeButton.layer.cornerRadius = 30
+        closeButton.alpha = 0.9
         
         closeButton.addTarget(self, action: #selector(closeButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         closeButton.addTarget(self, action: #selector(closeButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])

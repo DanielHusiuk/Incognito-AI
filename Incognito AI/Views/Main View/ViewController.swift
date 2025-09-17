@@ -14,19 +14,20 @@ class ViewController: UIViewController, UITextViewDelegate {
     let spacer = UIView()
     
     let labelStackView: UIStackView = .init(frame: .zero)
-    let centerLabel: UILabel = .init(frame: .zero)
-    let centerDetailLabelButton: UIButton = .init(frame: .zero)
+    let centerLabel = CenterLabel()
+    let centerDetailLabelButton = MessagesButton()
     
-    let settingsButton: UIButton = .init(frame: .zero)
-    let newChatButton: UIButton = .init(frame: .zero)
+    let settingsButton = SettingsButton()
+    let newChatButton = NewChatButton()
     
     let bottomStackView: UIStackView = .init(frame: .zero)
     var bottomStackBottomConstraint: NSLayoutConstraint!
-    let aiButton: UIButton = .init(frame: .zero)
+    let aiButton = AiButton()
     let sendButton: UIButton = .init(frame: .zero)
     
     let fieldView: UIView = .init(frame: .zero)
     let fieldText: UITextView = .init(frame: .zero)
+    var fieldTextHeightConstraint: NSLayoutConstraint!
     var fieldTextStandardConstraint: [NSLayoutConstraint]!
     var fieldTextBigConstraint: [NSLayoutConstraint]!
     
@@ -36,9 +37,6 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     let eraseButton: UIButton = .init(frame: .zero)
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
-    
-    let navigateToSettings = UINavigationController(rootViewController: SettingsViewController())
-    let navigateToMessages = UINavigationController(rootViewController: MessagesViewController())
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,6 +52,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         aiButton.layer.borderColor = UIColor.systemGray5.cgColor
         fieldView.layer.borderColor = UIColor.systemGray5.cgColor
+        checkScreenOrientation()
     }
     
     override func viewDidLayoutSubviews() {
@@ -103,51 +102,58 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     func loadShadows() {
-        ShadowManager().applyShadow(to: settingsButton, opacity: 1, shadowRadius: 10, viewBounds: settingsButton.bounds.insetBy(dx: 15, dy: 15))
-        ShadowManager().applyShadow(to: newChatButton, opacity: 1, shadowRadius: 10, viewBounds: newChatButton.bounds.insetBy(dx: 15, dy: 15))
-        ShadowManager().applyShadow(to: labelStackView, opacity: 0.2, shadowRadius: 10, viewBounds: labelStackView.bounds)
+        ShadowManager().applyShadow(to: settingsButton, opacity: 0.5, shadowRadius: 10, viewBounds: settingsButton.bounds.insetBy(dx: 15, dy: 15))
+        ShadowManager().applyShadow(to: newChatButton, opacity: 0.5, shadowRadius: 10, viewBounds: newChatButton.bounds.insetBy(dx: 15, dy: 15))
+        ShadowManager().applyShadow(to: labelStackView, opacity: 0.1, shadowRadius: 10, viewBounds: labelStackView.bounds)
         
-        ShadowManager().applyShadow(to: aiButton, opacity: 0.5, shadowRadius: 10, viewBounds: aiButton.bounds.insetBy(dx: 0, dy: 5))
+        ShadowManager().applyShadow(to: aiButton, opacity: 0.3, shadowRadius: 10, viewBounds: aiButton.bounds.insetBy(dx: 0, dy: 5))
         ShadowManager().applyShadow(to: fieldView, opacity: 0.3, shadowRadius: 10, viewBounds: fieldView.bounds.insetBy(dx: 0, dy: 5))
-        ShadowManager().applyShadow(to: sendButton, opacity: 0.5, shadowRadius: 10, viewBounds: sendButton.bounds.insetBy(dx: 0, dy: 5))
+        ShadowManager().applyShadow(to: sendButton, opacity: 0.3, shadowRadius: 10, viewBounds: sendButton.bounds.insetBy(dx: 0, dy: 5))
     }
     
     
     //MARK: - Background
     
     func backgroundSetup() {
-        //temporary
-        let scrollView = UIScrollView()
-        scrollView.isScrollEnabled = true
-        scrollView.bounces = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(scrollView)
+        let backgroundAnimated = AnimatedBackgroundView()
+        let hostingController = UIHostingController(rootView: backgroundAnimated)
+        hostingController.view?.translatesAutoresizingMaskIntoConstraints = false
+        hostingController.view.backgroundColor = UIColor(named: "BackgroundColor")
         
+        
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-            ])
-        
-        let imageView = UIImageView(image: UIImage(named: "background"))
-        imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.addSubview(imageView)
-        
-        NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            imageView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            imageView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            
-            imageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 2),
-            imageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 2)
-            ])
-        
-        scrollView.alwaysBounceVertical = true
-        scrollView.alwaysBounceHorizontal = true
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    func checkScreenOrientation() {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            let orientation = windowScene.interfaceOrientation
+            if orientation.isPortrait {
+                guard topStackView.alpha == 0 else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
+                    UIView.animate(withDuration: 0.2, animations: {
+                        self.topStackView.alpha = 1
+                        self.settingsButton.alpha = 1
+                        self.newChatButton.alpha = 1
+                    })
+                })
+            } else {
+                guard topStackView.alpha == 1 else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
+                    UIView.animate(withDuration: 0.2, animations: {
+                        self.topStackView.alpha = 0
+                        self.settingsButton.alpha = 0
+                        self.newChatButton.alpha = 0
+                    })
+                })
+            }
+        }
     }
     
     //MARK: - Top/Bottom Blur
@@ -239,31 +245,12 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     func centerLabelSetup() {
-        centerLabel.text = "Incognito AI"
-        centerLabel.textColor = .white
-        centerLabel.textAlignment = .center
-        centerLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        centerLabel.translatesAutoresizingMaskIntoConstraints = false
-        centerLabel.alpha = 0.9
         labelStackView.addArrangedSubview(centerLabel)
     }
     
     //MARK: - Messages Button
     
     func centerDetailLabelButtonSetup() {
-        centerDetailLabelButton.translatesAutoresizingMaskIntoConstraints = false
-        centerDetailLabelButton.setTitle("10 messages left", for: .normal)
-        centerDetailLabelButton.setTitleColor(.systemGray, for: .normal)
-        centerDetailLabelButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        centerDetailLabelButton.titleLabel?.textAlignment = .center
-        centerDetailLabelButton.backgroundColor = .clear
-        centerDetailLabelButton.layer.cornerRadius = 9
-        centerDetailLabelButton.alpha = 0.9
-        
-        centerDetailLabelButton.addTarget(self, action: #selector(centerDetailLabelButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
-        centerDetailLabelButton.addTarget(self, action: #selector(centerDetailLabelButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
-        centerDetailLabelButton.addTarget(self, action: #selector(centerDetailLabelButtonTouchUp), for: [.touchUpInside])
-        
         labelStackView.addArrangedSubview(centerDetailLabelButton)
         NSLayoutConstraint.activate([
             centerDetailLabelButton.widthAnchor.constraint(equalTo: centerDetailLabelButton.titleLabel!.widthAnchor, constant: 10),
@@ -271,36 +258,10 @@ class ViewController: UIViewController, UITextViewDelegate {
         ])
     }
     
-    @objc func centerDetailLabelButtonTouchDown() {
-        centerDetailLabelButton.backgroundColor = .darkGray
-    }
-    
-    @objc func centerDetailLabelButtonCancel() {
-        centerDetailLabelButton.backgroundColor = .clear
-    }
-    
-    @objc func centerDetailLabelButtonTouchUp() {
-        centerDetailLabelButton.backgroundColor = .clear
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        present(navigateToMessages, animated: true)
-    }
-    
     
     //MARK: - Settings Button
     
     func settingsButtonSetup() {
-        settingsButton.translatesAutoresizingMaskIntoConstraints = false
-        settingsButton.imageView?.contentMode = .scaleAspectFit
-        settingsButton.setImage(UIImage(systemName: "gear"), for: .normal)
-        settingsButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20, weight: .regular), forImageIn: .normal)
-        settingsButton.tintColor = .white
-        settingsButton.layer.cornerRadius = 25
-        settingsButton.alpha = 0.9
-        
-        settingsButton.addTarget(self, action: #selector(settingsButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
-        settingsButton.addTarget(self, action: #selector(settingsButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
-        settingsButton.addTarget(self, action: #selector(settingsButtonTouchUp), for: [.touchUpInside])
-        
         topStackView.addSubview(settingsButton)
         NSLayoutConstraint.activate([
             settingsButton.leadingAnchor.constraint(equalTo: topStackView.leadingAnchor, constant: 10),
@@ -310,34 +271,9 @@ class ViewController: UIViewController, UITextViewDelegate {
         ])
     }
     
-    @objc func settingsButtonTouchDown() {
-        settingsButton.isHighlighted = true
-    }
-    
-    @objc func settingsButtonCancel() {
-        settingsButton.isHighlighted = false
-    }
-    
-    @objc func settingsButtonTouchUp() {
-        settingsButton.isHighlighted = false
-        present(navigateToSettings, animated: true)
-    }
-    
     //MARK: - New Chat Button
     
     func newChatButtonSetup() {
-        newChatButton.translatesAutoresizingMaskIntoConstraints = false
-        newChatButton.imageView?.contentMode = .scaleAspectFit
-        newChatButton.setImage(UIImage(systemName: "plus.circle"), for: .normal)
-        newChatButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 22, weight: .regular), forImageIn: .normal)
-        newChatButton.tintColor = .white
-        newChatButton.layer.cornerRadius = 25
-        newChatButton.alpha = 0.9
-        
-        newChatButton.addTarget(self, action: #selector(newChatButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
-        newChatButton.addTarget(self, action: #selector(newChatButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
-        newChatButton.addTarget(self, action: #selector(newChatButtonTouchUp), for: [.touchUpInside])
-        
         topStackView.addSubview(newChatButton)
         NSLayoutConstraint.activate([
             newChatButton.trailingAnchor.constraint(equalTo: topStackView.trailingAnchor, constant: -10),
@@ -347,29 +283,14 @@ class ViewController: UIViewController, UITextViewDelegate {
         ])
     }
     
-    @objc func newChatButtonTouchDown() {
-        newChatButton.isHighlighted = true
-    }
     
-    @objc func newChatButtonCancel() {
-        newChatButton.isHighlighted = false
-    }
-    
-    @objc func newChatButtonTouchUp() {
-        newChatButton.isHighlighted = false
-        if UserDefaults.standard.bool(forKey: "HapticState") {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        }
-    }
-    
-    
-    //MARK: - Text View
+    //MARK: - Bottom Stack View
     
     func bottomStackViewSetup() {
         bottomStackView.translatesAutoresizingMaskIntoConstraints = false
         bottomStackView.axis = .horizontal
         bottomStackView.distribution = .fill
-        bottomStackView.alignment = .top
+        bottomStackView.alignment = .bottom
         bottomStackView.spacing = 10
         bottomStackBottomConstraint = bottomStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
         
@@ -391,24 +312,27 @@ class ViewController: UIViewController, UITextViewDelegate {
         
         bottomStackView.addArrangedSubview(fieldView)
         NSLayoutConstraint.activate([
-            fieldView.heightAnchor.constraint(equalToConstant: 50)
+            fieldView.heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
         ])
     }
     
-    //MARK: - Text Field
+    //MARK: - Text Field View
     
     func textFieldTextSetup() {
         fieldText.delegate = self
         fieldText.text = ""
+        fieldText.font = .systemFont(ofSize: 16, weight: .medium)
         fieldText.translatesAutoresizingMaskIntoConstraints = false
         fieldText.autocapitalizationType = .sentences
         fieldText.autocorrectionType = .yes
         fieldText.backgroundColor = .clear
         fieldText.textColor = .label
         fieldText.alpha = 0.9
-        fieldText.isScrollEnabled = true
-        fieldText.font = .systemFont(ofSize: 16, weight: .medium)
+        fieldText.isScrollEnabled = false
+        fieldText.clipsToBounds = true
         fieldText.textContainerInset = .init(top: 13, left: 0, bottom: 13, right: 3.5)
+        fieldTextHeightConstraint = fieldText.heightAnchor.constraint(equalToConstant: 46)
+        fieldTextHeightConstraint.isActive = true
         
         fieldTextStandardConstraint = [
             fieldText.topAnchor.constraint(equalTo: fieldView.topAnchor, constant: 2),
@@ -432,6 +356,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         checkFieldPlaceholder()
         checkDismissButton()
         checkEraseButton()
+        resizeTextView(fieldText)
     }
     
     func textViewDidBeginEditing(_ textView: UITextView) {
@@ -465,6 +390,17 @@ class ViewController: UIViewController, UITextViewDelegate {
         checkEraseButton()
     }
     
+    func resizeTextView(_ textView: UITextView) {
+        let newSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.greatestFiniteMagnitude))
+        let maxHeight: CGFloat = 120
+        fieldTextHeightConstraint.constant = min(newSize.height, maxHeight)
+        textView.isScrollEnabled = newSize.height >= maxHeight
+        
+        UIView.animate(withDuration: 0.1, animations: {
+            self.view.layoutIfNeeded()
+        })
+    }
+    
     //MARK: - Field Placeholder
     
     func fieldPlaceholderSetup() {
@@ -473,6 +409,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         fieldPlaceholder.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         fieldPlaceholder.textColor = UIColor.systemGray2
         fieldPlaceholder.textAlignment = .center
+        fieldPlaceholder.clipsToBounds = true
         
         fieldPlaceholderCenterConstraint = fieldPlaceholder.centerXAnchor.constraint(equalTo: fieldView.centerXAnchor)
         fieldPlaceholderLeadingConstraint = fieldPlaceholder.leadingAnchor.constraint(equalTo: fieldText.leadingAnchor, constant: 5)
@@ -526,8 +463,8 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     @objc func eraseText() {
+        fieldText.text.append("\n")
         AnimationManager().animateTextWithBottomSlide(label: fieldText, newText: "", duration: 0.15)
-        AnimationManager().animateLabelWithBottomSlide(label: fieldPlaceholder, duration: 0.15)
         
         if !fieldText.isEditing {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: { [self] in
@@ -535,10 +472,14 @@ class ViewController: UIViewController, UITextViewDelegate {
                 NSLayoutConstraint.activate(fieldTextBigConstraint)
             })
         }
-        UIView.animate(withDuration: 0.15, animations: {
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            self.fieldTextHeightConstraint.constant = 46
             self.eraseButton.alpha = 0
             self.view.layoutIfNeeded()
         })
+        AnimationManager().animateLabelWithBottomSlide(label: fieldPlaceholder, duration: 0.15)
+        
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
@@ -548,44 +489,11 @@ class ViewController: UIViewController, UITextViewDelegate {
     //MARK: - AI Button
     
     func aiButtonSetup() {
-        aiButton.translatesAutoresizingMaskIntoConstraints = false
-        aiButton.imageView?.contentMode = .scaleAspectFit
-        aiButton.setImage(UIImage(systemName: "apple.intelligence"), for: .normal)
-        aiButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(weight: .semibold), forImageIn: .normal)
-        aiButton.tintColor = .systemGray2
-        aiButton.backgroundColor = .systemGray6
-        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
-        aiButton.layer.borderWidth = 2
-        aiButton.layer.cornerRadius = 25
-        aiButton.alpha = 0.9
-        
-        aiButton.addTarget(self, action: #selector(aiButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
-        aiButton.addTarget(self, action: #selector(aiButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
-        aiButton.addTarget(self, action: #selector(aiButtonTouchUp), for: [.touchUpInside])
-        
         bottomStackView.addArrangedSubview(aiButton)
         NSLayoutConstraint.activate([
             aiButton.heightAnchor.constraint(equalToConstant: 50),
             aiButton.widthAnchor.constraint(equalToConstant: 50)
         ])
-    }
-    
-    @objc func aiButtonTouchDown() {
-        aiButton.tintColor = .white
-        aiButton.backgroundColor = .systemGray3
-        aiButton.layer.borderColor = UIColor.systemGray2.cgColor
-    }
-    
-    @objc func aiButtonCancel() {
-        aiButton.tintColor = .systemGray2
-        aiButton.backgroundColor = .systemGray6
-        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
-    }
-    
-    @objc func aiButtonTouchUp() {
-        aiButton.tintColor = .systemGray2
-        aiButton.backgroundColor = .systemGray6
-        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
     }
     
     //MARK: - Send Button
@@ -628,20 +536,25 @@ class ViewController: UIViewController, UITextViewDelegate {
         sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
         
         guard fieldText.text?.isEmpty != true else { return }
-        print(fieldText.text!)
-        AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.2)
-        AnimationManager().animateLabelWithTopSlide(label: fieldPlaceholder, duration: 0.15)
+        print(fieldText.text!) //save message
+        
+        AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
         fieldText.endEditing(true)
         
-        NSLayoutConstraint.deactivate(fieldTextStandardConstraint)
-        NSLayoutConstraint.activate(fieldTextBigConstraint)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [self] in
+            NSLayoutConstraint.deactivate(fieldTextStandardConstraint)
+            NSLayoutConstraint.activate(fieldTextBigConstraint)
+        })
         
         if eraseButton.alpha != 0 {
-            UIView.animate(withDuration: 0.15, animations: {
+            UIView.animate(withDuration: 0.2, animations: {
+                self.fieldTextHeightConstraint.constant = 46
                 self.eraseButton.alpha = 0
                 self.view.layoutIfNeeded()
             })
         }
+        
+        AnimationManager().animateLabelWithTopSlide(label: fieldPlaceholder, duration: 0.15)
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
