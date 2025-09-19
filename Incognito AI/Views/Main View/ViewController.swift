@@ -38,6 +38,9 @@ class ViewController: UIViewController, UITextViewDelegate {
     let eraseButton: UIButton = .init(frame: .zero)
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
     
+    let openAiApi = ApiManager()
+    let responseView = UILabel()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundSetup()
@@ -47,6 +50,13 @@ class ViewController: UIViewController, UITextViewDelegate {
         loadBottomView()
         loadShadows()
         loadNotifications()
+        
+        
+        openAiApi.loadData()
+        print(openAiApi.finalResponse)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+            self.responseView.text = self.openAiApi.finalResponse
+        }
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -62,11 +72,17 @@ class ViewController: UIViewController, UITextViewDelegate {
         }
     }
     
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        UserDefaults.standard.set(false, forKey: "isEditing")
+    }
+    
     
     //MARK: - Load Views
     
     func loadUserDefaults() {
         UserDefaults.standard.set(true, forKey: "HapticState")
+        UserDefaults.standard.set(false, forKey: "isEditing")
     }
     
     func loadTopView() {
@@ -120,7 +136,6 @@ class ViewController: UIViewController, UITextViewDelegate {
         hostingController.view?.translatesAutoresizingMaskIntoConstraints = false
         hostingController.view.backgroundColor = UIColor(named: "BackgroundColor")
         
-        
         addChild(hostingController)
         view.addSubview(hostingController.view)
         NSLayoutConstraint.activate([
@@ -129,32 +144,55 @@ class ViewController: UIViewController, UITextViewDelegate {
             hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+        
+        //temporary label for responses
+        responseView.font = UIFont.systemFont(ofSize: 12, weight: .light)
+        responseView.textColor = .white
+        responseView.textAlignment = .left
+        responseView.backgroundColor = .gray
+        responseView.numberOfLines = 10
+        responseView.text = "hello:"
+        responseView.translatesAutoresizingMaskIntoConstraints = false
+        responseView.adjustsFontSizeToFitWidth = true
+        
+        view.addSubview(responseView)
+        NSLayoutConstraint.activate([
+            responseView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            responseView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
     }
     
     func checkScreenOrientation() {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             let orientation = windowScene.interfaceOrientation
             if orientation.isPortrait {
+                fieldText.endEditing(true)
                 guard topStackView.alpha == 0 else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
                     UIView.animate(withDuration: 0.2, animations: {
                         self.topStackView.alpha = 1
                         self.settingsButton.alpha = 1
                         self.newChatButton.alpha = 1
+                        if UserDefaults.standard.bool(forKey: "isEditing") { self.fieldText.becomeFirstResponder() }
+                        print(UserDefaults.standard.bool(forKey: "isEditing"))
                     })
                 })
             } else {
+                fieldText.endEditing(true)
                 guard topStackView.alpha == 1 else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
                     UIView.animate(withDuration: 0.2, animations: {
                         self.topStackView.alpha = 0
                         self.settingsButton.alpha = 0
                         self.newChatButton.alpha = 0
+                        if UserDefaults.standard.bool(forKey: "isEditing") { self.fieldText.becomeFirstResponder() }
+                        print(UserDefaults.standard.bool(forKey: "isEditing"))
                     })
                 })
             }
         }
     }
+    
     
     //MARK: - Top/Bottom Blur
     
@@ -230,6 +268,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         ])
     }
     
+    
     //MARK: - Center Label
     
     func labelStackViewSetup() {
@@ -247,6 +286,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     func centerLabelSetup() {
         labelStackView.addArrangedSubview(centerLabel)
     }
+    
     
     //MARK: - Messages Button
     
@@ -270,6 +310,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             settingsButton.widthAnchor.constraint(equalToConstant: 50)
         ])
     }
+    
     
     //MARK: - New Chat Button
     
@@ -316,6 +357,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         ])
     }
     
+    
     //MARK: - Text Field View
     
     func textFieldTextSetup() {
@@ -353,6 +395,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     func textViewDidChange(_ textView: UITextView) {
+        UserDefaults.standard.set(true, forKey: "isEditing")
         checkFieldPlaceholder()
         checkDismissButton()
         checkEraseButton()
@@ -362,6 +405,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     func textViewDidBeginEditing(_ textView: UITextView) {
         NSLayoutConstraint.deactivate(fieldTextBigConstraint)
         NSLayoutConstraint.activate(fieldTextStandardConstraint)
+        UserDefaults.standard.set(true, forKey: "isEditing")
         
         UIView.animate(withDuration: 0.2, animations: {
             self.fieldPlaceholderCenterConstraint.isActive = false
@@ -392,14 +436,16 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     func resizeTextView(_ textView: UITextView) {
         let newSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.greatestFiniteMagnitude))
-        let maxHeight: CGFloat = 120
+        let maxHeight: CGFloat = 110
         fieldTextHeightConstraint.constant = min(newSize.height, maxHeight)
         textView.isScrollEnabled = newSize.height >= maxHeight
         
         UIView.animate(withDuration: 0.1, animations: {
             self.view.layoutIfNeeded()
+            self.loadShadows()
         })
     }
+    
     
     //MARK: - Field Placeholder
     
@@ -428,6 +474,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             fieldPlaceholder.alpha = 0
         }
     }
+    
     
     //MARK: - Erase Button
     
@@ -477,6 +524,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             self.fieldTextHeightConstraint.constant = 46
             self.eraseButton.alpha = 0
             self.view.layoutIfNeeded()
+            self.loadShadows()
         })
         AnimationManager().animateLabelWithBottomSlide(label: fieldPlaceholder, duration: 0.15)
         
@@ -495,6 +543,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             aiButton.widthAnchor.constraint(equalToConstant: 50)
         ])
     }
+    
     
     //MARK: - Send Button
     
@@ -540,6 +589,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         
         AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
         fieldText.endEditing(true)
+        UserDefaults.standard.set(false, forKey: "isEditing")
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [self] in
             NSLayoutConstraint.deactivate(fieldTextStandardConstraint)
@@ -551,6 +601,7 @@ class ViewController: UIViewController, UITextViewDelegate {
                 self.fieldTextHeightConstraint.constant = 46
                 self.eraseButton.alpha = 0
                 self.view.layoutIfNeeded()
+                self.loadShadows()
             })
         }
         
@@ -583,6 +634,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     @objc func dismissKeyboard(_ sender: UIButton) {
+        UserDefaults.standard.set(false, forKey: "isEditing")
         fieldText.endEditing(true)
     }
     
@@ -633,6 +685,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     
 }
 
+
 //MARK: - Extensions
 
 extension UITextView {
@@ -640,4 +693,3 @@ extension UITextView {
         isFirstResponder
     }
 }
-
