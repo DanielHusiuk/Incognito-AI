@@ -30,28 +30,6 @@ class AiButton: UIButton {
         layer.borderWidth = 2
         layer.cornerRadius = 25
         alpha = 0.9
-        
-        addTarget(self, action: #selector(aiButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
-        addTarget(self, action: #selector(aiButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
-        addTarget(self, action: #selector(aiButtonTouchUp), for: [.touchUpInside])
-    }
-    
-    @objc func aiButtonTouchDown() {
-        tintColor = .white
-        backgroundColor = .systemGray3
-        layer.borderColor = UIColor.systemGray2.cgColor
-    }
-    
-    @objc func aiButtonCancel() {
-        tintColor = .systemGray2
-        backgroundColor = .systemGray6
-        layer.borderColor = UIColor.systemGray5.cgColor
-    }
-    
-    @objc func aiButtonTouchUp() {
-        tintColor = .systemGray2
-        backgroundColor = .systemGray6
-        layer.borderColor = UIColor.systemGray5.cgColor
     }
 
 }

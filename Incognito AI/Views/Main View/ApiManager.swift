@@ -35,18 +35,27 @@ class ApiManager {
     let url = URL(string: "https://models.github.ai/inference/chat/completions")
     var token: String = ""
     
+    var userMessage: String = ""
     var finalResponse: String = ""
+    var requestBody: ChatRequest?
 
-    let requestBody = ChatRequest(
-        model: "openai/gpt-4.1-mini",
-        messages: [
-            ChatMessage(role: "system", content: "You are a helpful assistant in Incognito AI app."),
-            ChatMessage(role: "user", content: "Write 3 sentences about you and 1 about Incognito AI app"),
-        ]
-    )
+    func sendData() {
+        if !userMessage.isEmpty {
+            var requestBody = ChatRequest(
+                model: "openai/gpt-4.1-mini",
+                messages: [
+                    ChatMessage(role: "system", content: "You are a helpful assistant in Incognito AI app."),
+                    ChatMessage(role: "user", content: userMessage),
+                ]
+            )
+        }
+    }
+
+
 
     func loadData() {
         do {
+            guard let requestBody else { return }
             let jsonData = try JSONEncoder().encode(requestBody)
             var request = URLRequest(url: url!)
             request.httpMethod = "POST"

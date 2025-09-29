@@ -23,6 +23,11 @@ class ViewController: UIViewController, UITextViewDelegate {
     let bottomStackView: UIStackView = .init(frame: .zero)
     var bottomStackBottomConstraint: NSLayoutConstraint!
     let aiButton = AiButton()
+    
+    let aiPickerView: UIView = .init(frame: .zero)
+    let aiPickerStack: UIStackView = .init(frame: .zero)
+    let aiPickerModel = AiPickerModel()
+    var aiPickerButtons: [AiPickerButton] = []
     let sendButton: UIButton = .init(frame: .zero)
     
     let fieldView: UIView = .init(frame: .zero)
@@ -39,6 +44,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
     
     let openAiApi = ApiManager()
+    let requestView = UILabel()
     let responseView = UILabel()
     
     override func viewDidLoad() {
@@ -48,20 +54,15 @@ class ViewController: UIViewController, UITextViewDelegate {
         loadUserDefaults()
         loadTopView()
         loadBottomView()
-        loadShadows()
         loadNotifications()
         
-        
-        openAiApi.loadData()
-        print(openAiApi.finalResponse)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-            self.responseView.text = self.openAiApi.finalResponse
-        }
+        messagesSetup()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         aiButton.layer.borderColor = UIColor.systemGray5.cgColor
         fieldView.layer.borderColor = UIColor.systemGray5.cgColor
+        aiPickerView.layer.borderColor = UIColor.systemGray5.cgColor
         checkScreenOrientation()
     }
     
@@ -109,6 +110,11 @@ class ViewController: UIViewController, UITextViewDelegate {
         fieldPlaceholderSetup()
         
         sendButtonSetup()
+        
+        aiPickerViewSetup()
+        aiPickerStackSetup()
+        addAiPickerViewData()
+        
         dismissKeyboardButtonSetup()
     }
     
@@ -144,6 +150,26 @@ class ViewController: UIViewController, UITextViewDelegate {
             hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+    
+    func messagesSetup() {
+        //temporary label for requests
+        requestView.font = UIFont.systemFont(ofSize: 12, weight: .light)
+        requestView.textColor = .white
+        requestView.textAlignment = .left
+        requestView.backgroundColor = .gray
+        requestView.numberOfLines = 10
+        requestView.translatesAutoresizingMaskIntoConstraints = false
+        requestView.adjustsFontSizeToFitWidth = true
+        requestView.text = fieldText.text
+        
+        view.addSubview(requestView)
+        NSLayoutConstraint.activate([
+            requestView.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -50),
+            requestView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            requestView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
+            requestView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
+        ])
         
         //temporary label for responses
         responseView.font = UIFont.systemFont(ofSize: 12, weight: .light)
@@ -151,14 +177,16 @@ class ViewController: UIViewController, UITextViewDelegate {
         responseView.textAlignment = .left
         responseView.backgroundColor = .gray
         responseView.numberOfLines = 10
-        responseView.text = "hello:"
         responseView.translatesAutoresizingMaskIntoConstraints = false
         responseView.adjustsFontSizeToFitWidth = true
+        responseView.text = openAiApi.finalResponse
         
         view.addSubview(responseView)
         NSLayoutConstraint.activate([
-            responseView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            responseView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            responseView.topAnchor.constraint(equalTo: topStackView.bottomAnchor, constant: 50),
+            responseView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            responseView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
+            responseView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
         ])
     }
     
@@ -166,6 +194,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             let orientation = windowScene.interfaceOrientation
             if orientation.isPortrait {
+                resizeTextView(fieldText)
                 fieldText.endEditing(true)
                 guard topStackView.alpha == 0 else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
@@ -178,6 +207,7 @@ class ViewController: UIViewController, UITextViewDelegate {
                     })
                 })
             } else {
+                resizeTextView(fieldText)
                 fieldText.endEditing(true)
                 guard topStackView.alpha == 1 else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
@@ -435,11 +465,21 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     func resizeTextView(_ textView: UITextView) {
-        let newSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.greatestFiniteMagnitude))
-        let maxHeight: CGFloat = 110
-        fieldTextHeightConstraint.constant = min(newSize.height, maxHeight)
-        textView.isScrollEnabled = newSize.height >= maxHeight
-        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            let orientation = windowScene.interfaceOrientation
+            
+            if orientation.isLandscape {
+                fieldTextHeightConstraint.constant = 46
+                textView.isScrollEnabled = true
+            } else if orientation.isPortrait {
+                textView.isScrollEnabled = false
+                let newSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.greatestFiniteMagnitude))
+                let maxHeight: CGFloat = 110
+                fieldTextHeightConstraint.constant = min(newSize.height, maxHeight)
+                textView.isScrollEnabled = newSize.height >= maxHeight
+            }
+        }
+
         UIView.animate(withDuration: 0.1, animations: {
             self.view.layoutIfNeeded()
             self.loadShadows()
@@ -537,11 +577,107 @@ class ViewController: UIViewController, UITextViewDelegate {
     //MARK: - AI Button
     
     func aiButtonSetup() {
+        aiButton.addTarget(self, action: #selector(aiButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
+        aiButton.addTarget(self, action: #selector(aiButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        aiButton.addTarget(self, action: #selector(aiButtonTouchUp), for: [.touchUpInside])
+        
         bottomStackView.addArrangedSubview(aiButton)
         NSLayoutConstraint.activate([
             aiButton.heightAnchor.constraint(equalToConstant: 50),
             aiButton.widthAnchor.constraint(equalToConstant: 50)
         ])
+    }
+    
+    @objc func aiButtonTouchDown() {
+        aiButton.tintColor = .white
+        aiButton.backgroundColor = .systemGray3
+        aiButton.layer.borderColor = UIColor.systemGray2.cgColor
+    }
+    
+    @objc func aiButtonCancel() {
+        aiButton.tintColor = .systemGray2
+        aiButton.backgroundColor = .systemGray6
+        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
+    }
+    
+    @objc func aiButtonTouchUp() {
+        aiButton.tintColor = .systemGray2
+        aiButton.backgroundColor = .systemGray6
+        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
+        
+        if aiPickerView.isHidden {
+            aiPickerView.alpha = 0
+            aiPickerView.isHidden = false
+            UIView.animate(withDuration: 0.2, animations: {
+                self.aiPickerView.alpha = 0.9
+            })
+        } else {
+            aiPickerView.alpha = 0.9
+            UIView.animate(withDuration: 0.2, animations: {
+                self.aiPickerView.alpha = 0
+            })
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
+                self.aiPickerView.isHidden = true
+            })
+        }
+
+    }
+    
+    func aiPickerViewSetup() {
+        aiPickerView.translatesAutoresizingMaskIntoConstraints = false
+        aiPickerView.backgroundColor = .systemGray6
+        aiPickerView.layer.borderWidth = 2
+        aiPickerView.layer.borderColor = UIColor.systemGray5.cgColor
+        aiPickerView.layer.cornerRadius = 25
+        aiPickerView.alpha = 0
+        aiPickerView.isHidden = true
+        
+        bottomStackView.insertSubview(aiPickerView, belowSubview: aiButton)
+        NSLayoutConstraint.activate([
+            aiPickerView.bottomAnchor.constraint(equalTo: aiButton.bottomAnchor),
+            aiPickerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 284),
+            aiPickerView.widthAnchor.constraint(equalToConstant: 50)
+        ])
+    }
+    
+    func aiPickerStackSetup() {
+        aiPickerStack.translatesAutoresizingMaskIntoConstraints = false
+        aiPickerStack.axis = .vertical
+        aiPickerStack.distribution = .fill
+        aiPickerStack.alignment = .top
+        aiPickerStack.spacing = 4
+        
+        aiPickerView.addSubview(aiPickerStack)
+        NSLayoutConstraint.activate([
+            aiPickerStack.leadingAnchor.constraint(equalTo: aiPickerView.leadingAnchor, constant: 4),
+            aiPickerStack.trailingAnchor.constraint(equalTo: aiPickerView.trailingAnchor, constant: -4),
+            aiPickerStack.topAnchor.constraint(equalTo: aiPickerView.topAnchor, constant: 8),
+            aiPickerStack.bottomAnchor.constraint(equalTo: aiButton.topAnchor, constant: -8)
+        ])
+    }
+    
+    func addAiPickerViewData() {
+        for (index, buttonModel) in aiPickerModel.buttons.enumerated() {
+            let button = AiPickerButton(model: buttonModel)
+            aiPickerButtons.append(button)
+            aiPickerStack.addArrangedSubview(button)
+            
+            NSLayoutConstraint.activate([
+                button.leadingAnchor.constraint(equalTo: aiPickerStack.leadingAnchor),
+                button.trailingAnchor.constraint(equalTo: aiPickerStack.trailingAnchor)
+                ])
+            
+            if index < aiPickerModel.buttons.count - 1 {
+                let aiPickerSpacer = AiPickerSpacer()
+                aiPickerStack.addArrangedSubview(aiPickerSpacer)
+                
+                NSLayoutConstraint.activate([
+                    aiPickerSpacer.centerXAnchor.constraint(equalTo: aiPickerStack.centerXAnchor),
+                    aiPickerSpacer.leadingAnchor.constraint(equalTo: aiPickerStack.leadingAnchor, constant: 4),
+                    aiPickerSpacer.trailingAnchor.constraint(equalTo: aiPickerStack.trailingAnchor, constant: -4)
+                ])
+            }
+        }
     }
     
     
@@ -584,8 +720,12 @@ class ViewController: UIViewController, UITextViewDelegate {
         sendButton.backgroundColor = #colorLiteral(red: 0.02999999933, green: 0.02999999933, blue: 0.02999999933, alpha: 1)
         sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
         
-        guard fieldText.text?.isEmpty != true else { return }
-        print(fieldText.text!) //save message
+        guard let text = fieldText.text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        requestView.text = fieldText.text
+        openAiApi.userMessage = fieldText.text
+        
+        openAiApi.loadData()
+        print(openAiApi.finalResponse)
         
         AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
         fieldText.endEditing(true)
