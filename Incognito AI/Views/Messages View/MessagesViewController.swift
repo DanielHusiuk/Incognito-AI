@@ -36,7 +36,7 @@ class MessagesViewController: UIViewController {
         closeButton.backgroundColor = #colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1)
         closeButton.layer.borderColor = #colorLiteral(red: 0.2567243651, green: 0.5657354798, blue: 0.4573884009, alpha: 1)
         closeButton.layer.borderWidth = 2
-        closeButton.layer.cornerRadius = 30
+        closeButton.layer.cornerRadius = 27.5
         closeButton.alpha = 0.9
         
         closeButton.addTarget(self, action: #selector(closeButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
@@ -48,7 +48,7 @@ class MessagesViewController: UIViewController {
             closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
             closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             closeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
-            closeButton.heightAnchor.constraint(equalToConstant: 60)
+            closeButton.heightAnchor.constraint(equalToConstant: 55)
         ])
     }
     

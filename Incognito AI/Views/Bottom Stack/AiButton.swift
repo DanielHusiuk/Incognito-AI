@@ -30,6 +30,7 @@ class AiButton: UIButton {
         layer.borderWidth = 2
         layer.cornerRadius = 25
         alpha = 0.9
+        transform = CGAffineTransform(rotationAngle: .pi * 2)
     }
 
 }

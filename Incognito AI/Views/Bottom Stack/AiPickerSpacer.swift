@@ -25,6 +25,7 @@ class AiPickerSpacer: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         backgroundColor = .systemGray5
         layer.cornerRadius = 0.5
+        isUserInteractionEnabled = false
         
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: 1)

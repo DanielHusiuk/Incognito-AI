@@ -9,7 +9,7 @@ import UIKit
 
 class AiPickerButton: UIButton {
     
-    let aiPickerButton = UIView()
+    var action: (() -> Void)?
     
     init(model: Button) {
         super.init(frame: .zero)
@@ -25,25 +25,28 @@ class AiPickerButton: UIButton {
         translatesAutoresizingMaskIntoConstraints = false
         imageView?.contentMode = .scaleAspectFit
         setImage(model.image, for: .normal)
-        setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(weight: .semibold), forImageIn: .normal)
         tintColor = .systemGray2
         backgroundColor = .clear
         layer.cornerRadius = 21
         alpha = 0.9
+        self.action = model.action
         
         addTarget(self, action: #selector(buttonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         addTarget(self, action: #selector(buttonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
         addTarget(self, action: #selector(buttonTouchUp), for: [.touchUpInside])
         
         NSLayoutConstraint.activate([
-            heightAnchor.constraint(equalToConstant: 42)
+            heightAnchor.constraint(equalToConstant: 42),
+            widthAnchor.constraint(equalTo: heightAnchor),
+            imageView!.heightAnchor.constraint(equalToConstant: 12),
+            imageView!.widthAnchor.constraint(equalToConstant: 12)
         ])
     }
     
     
     
     @objc func buttonTouchDown() {
-        backgroundColor = .blue
+        backgroundColor = .systemGray
     }
     
     @objc func buttonCancel() {
@@ -52,6 +55,7 @@ class AiPickerButton: UIButton {
     
     @objc func buttonTouchUp() {
         backgroundColor = .clear
+        action?()
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }

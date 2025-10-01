@@ -18,27 +18,27 @@ struct AiPickerModel {
     var buttons: [Button] = [
         Button(id: 1,
                title: "Open AI",
-               image: UIImage(systemName: "plus")!,
+               image: UIImage(named: "openai")!,
                action: { print("Open AI") } ),
         
         Button(id: 2,
                title: "Claude AI",
-               image: UIImage(systemName: "suit.spade.fill")!,
+               image: UIImage(named: "claude")!,
                action: { print("Claude AI") } ),
         
         Button(id: 3,
                title: "Perplexity AI",
-               image: UIImage(systemName: "paperplane.fill")!,
+               image: UIImage(named: "perplexity")!,
                action: { print("Perplexity AI") } ),
         
         Button(id: 4,
                title: "Gemini AI",
-               image: UIImage(systemName: "sparkle")!,
+               image: UIImage(named: "gemini")!,
                action: { print("Gemini AI") } ),
         
         Button(id: 5,
                title: "DeepSeek AI",
-               image: UIImage(systemName: "hurricane")!,
+               image: UIImage(named: "deepseek")!,
                action: { print("DeepSeek AI") } ),
     ]
 }

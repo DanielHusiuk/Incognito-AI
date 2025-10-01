@@ -22,13 +22,14 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     let bottomStackView: UIStackView = .init(frame: .zero)
     var bottomStackBottomConstraint: NSLayoutConstraint!
-    let aiButton = AiButton()
     
+    let aiButton = AiButton()
+    let aiPickerContainer: UIView = .init(frame: .zero)
     let aiPickerView: UIView = .init(frame: .zero)
     let aiPickerStack: UIStackView = .init(frame: .zero)
     let aiPickerModel = AiPickerModel()
     var aiPickerButtons: [AiPickerButton] = []
-    let sendButton: UIButton = .init(frame: .zero)
+    let aiPickerShadowView: UIView = .init(frame: .zero)
     
     let fieldView: UIView = .init(frame: .zero)
     let fieldText: UITextView = .init(frame: .zero)
@@ -40,6 +41,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     var fieldPlaceholderCenterConstraint: NSLayoutConstraint!
     var fieldPlaceholderLeadingConstraint: NSLayoutConstraint!
     
+    let sendButton: UIButton = .init(frame: .zero)
     let eraseButton: UIButton = .init(frame: .zero)
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
     
@@ -479,7 +481,7 @@ class ViewController: UIViewController, UITextViewDelegate {
                 textView.isScrollEnabled = newSize.height >= maxHeight
             }
         }
-
+        
         UIView.animate(withDuration: 0.1, animations: {
             self.view.layoutIfNeeded()
             self.loadShadows()
@@ -606,24 +608,64 @@ class ViewController: UIViewController, UITextViewDelegate {
         aiButton.layer.borderColor = UIColor.systemGray5.cgColor
         
         if aiPickerView.isHidden {
-            aiPickerView.alpha = 0
+            //show
+            aiPickerView.alpha = 0.9
             aiPickerView.isHidden = false
-            UIView.animate(withDuration: 0.2, animations: {
-                self.aiPickerView.alpha = 0.9
+            
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut, animations: {
+                self.aiButton.transform = CGAffineTransform(rotationAngle: -.pi)
+                self.aiPickerView.transform = CGAffineTransform(translationX: 0, y: 0)
+            })
+            
+            UIView.animate(withDuration: 0.2,  delay: 0.2, options: .curveLinear, animations: {
+                ShadowManager().applyShadow(to: self.aiPickerShadowView, opacity: 0.2, shadowRadius: 10, viewBounds: self.aiPickerShadowView.bounds.insetBy(dx: 0, dy: 5))
             })
         } else {
-            aiPickerView.alpha = 0.9
+            //hide
             UIView.animate(withDuration: 0.2, animations: {
+                ShadowManager().applyShadow(to: self.aiPickerShadowView, opacity: 0, shadowRadius: 0, viewBounds: self.aiPickerShadowView.bounds.insetBy(dx: 0, dy: 0))
+            })
+            
+            UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut, animations: {
+                self.aiButton.transform = CGAffineTransform(rotationAngle: .pi * 2)
+                self.aiPickerView.transform = CGAffineTransform(translationX: 0, y: 262)
+            })
+            
+            UIView.animate(withDuration: 0.2, delay: 0.3, options: .curveLinear, animations: {
                 self.aiPickerView.alpha = 0
-            })
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
+            }) { _ in
                 self.aiPickerView.isHidden = true
-            })
+            }
+            
         }
-
+        
     }
     
+    
+    //MARK: - AI Picker View
+    
     func aiPickerViewSetup() {
+        aiPickerContainer.translatesAutoresizingMaskIntoConstraints = false
+        aiPickerContainer.layer.cornerRadius = 25
+        aiPickerContainer.clipsToBounds = true
+        view.addSubview(aiPickerContainer)
+        
+        aiPickerShadowView.translatesAutoresizingMaskIntoConstraints = false
+        aiPickerShadowView.layer.cornerRadius = 25
+        aiPickerShadowView.clipsToBounds = true
+        bottomStackView.insertSubview(aiPickerShadowView, belowSubview: aiPickerContainer)
+        
+        NSLayoutConstraint.activate([
+            aiPickerContainer.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -10),
+            aiPickerContainer.centerXAnchor.constraint(equalTo: aiButton.centerXAnchor),
+            aiPickerContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 240),
+            aiPickerContainer.widthAnchor.constraint(equalToConstant: 50),
+            
+            aiPickerShadowView.bottomAnchor.constraint(equalTo: aiPickerContainer.bottomAnchor),
+            aiPickerShadowView.heightAnchor.constraint(equalTo: aiPickerContainer.heightAnchor),
+            aiPickerShadowView.widthAnchor.constraint(equalTo: aiPickerContainer.widthAnchor)
+        ])
+        
         aiPickerView.translatesAutoresizingMaskIntoConstraints = false
         aiPickerView.backgroundColor = .systemGray6
         aiPickerView.layer.borderWidth = 2
@@ -631,12 +673,14 @@ class ViewController: UIViewController, UITextViewDelegate {
         aiPickerView.layer.cornerRadius = 25
         aiPickerView.alpha = 0
         aiPickerView.isHidden = true
+        aiPickerView.clipsToBounds = true
+        aiPickerView.transform = CGAffineTransform(translationX: 0, y: 262)
+        aiPickerContainer.addSubview(aiPickerView)
         
-        bottomStackView.insertSubview(aiPickerView, belowSubview: aiButton)
         NSLayoutConstraint.activate([
-            aiPickerView.bottomAnchor.constraint(equalTo: aiButton.bottomAnchor),
-            aiPickerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 284),
-            aiPickerView.widthAnchor.constraint(equalToConstant: 50)
+            aiPickerView.bottomAnchor.constraint(equalTo: aiPickerContainer.bottomAnchor),
+            aiPickerView.heightAnchor.constraint(equalTo: aiPickerContainer.heightAnchor),
+            aiPickerView.widthAnchor.constraint(equalTo: aiPickerContainer.widthAnchor)
         ])
     }
     
@@ -651,8 +695,8 @@ class ViewController: UIViewController, UITextViewDelegate {
         NSLayoutConstraint.activate([
             aiPickerStack.leadingAnchor.constraint(equalTo: aiPickerView.leadingAnchor, constant: 4),
             aiPickerStack.trailingAnchor.constraint(equalTo: aiPickerView.trailingAnchor, constant: -4),
-            aiPickerStack.topAnchor.constraint(equalTo: aiPickerView.topAnchor, constant: 8),
-            aiPickerStack.bottomAnchor.constraint(equalTo: aiButton.topAnchor, constant: -8)
+            aiPickerStack.topAnchor.constraint(equalTo: aiPickerView.topAnchor, constant: 4),
+            aiPickerStack.bottomAnchor.constraint(equalTo: aiPickerView.bottomAnchor, constant: -4)
         ])
     }
     
