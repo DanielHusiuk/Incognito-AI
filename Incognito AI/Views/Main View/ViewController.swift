@@ -62,9 +62,12 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
-        fieldView.layer.borderColor = UIColor.systemGray5.cgColor
-        aiPickerView.layer.borderColor = UIColor.systemGray5.cgColor
+        super.traitCollectionDidChange(previousTraitCollection)
+        if previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle {
+            aiButton.layer.borderColor = UIColor.systemGray5.cgColor
+            fieldView.layer.borderColor = UIColor.systemGray5.cgColor
+            aiPickerView.layer.borderColor = UIColor.systemGray5.cgColor
+        }
         checkScreenOrientation()
     }
     
@@ -112,15 +115,14 @@ class ViewController: UIViewController, UITextViewDelegate {
         fieldPlaceholderSetup()
         
         sendButtonSetup()
-        
         aiPickerViewSetup()
         aiPickerStackSetup()
         addAiPickerViewData()
-        
         dismissKeyboardButtonSetup()
     }
     
     func loadNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(self.handleButtonTap), name: Notification.Name("pickerButtonTapped"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
@@ -136,61 +138,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     
-    //MARK: - Background
-    
-    func backgroundSetup() {
-        let backgroundAnimated = AnimatedBackgroundView()
-        let hostingController = UIHostingController(rootView: backgroundAnimated)
-        hostingController.view?.translatesAutoresizingMaskIntoConstraints = false
-        hostingController.view.backgroundColor = UIColor(named: "BackgroundColor")
-        
-        addChild(hostingController)
-        view.addSubview(hostingController.view)
-        NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
-            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-    }
-    
-    func messagesSetup() {
-        //temporary label for requests
-        requestView.font = UIFont.systemFont(ofSize: 12, weight: .light)
-        requestView.textColor = .white
-        requestView.textAlignment = .left
-        requestView.backgroundColor = .gray
-        requestView.numberOfLines = 10
-        requestView.translatesAutoresizingMaskIntoConstraints = false
-        requestView.adjustsFontSizeToFitWidth = true
-        requestView.text = fieldText.text
-        
-        view.addSubview(requestView)
-        NSLayoutConstraint.activate([
-            requestView.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -50),
-            requestView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            requestView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
-            requestView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
-        ])
-        
-        //temporary label for responses
-        responseView.font = UIFont.systemFont(ofSize: 12, weight: .light)
-        responseView.textColor = .white
-        responseView.textAlignment = .left
-        responseView.backgroundColor = .gray
-        responseView.numberOfLines = 10
-        responseView.translatesAutoresizingMaskIntoConstraints = false
-        responseView.adjustsFontSizeToFitWidth = true
-        responseView.text = openAiApi.finalResponse
-        
-        view.addSubview(responseView)
-        NSLayoutConstraint.activate([
-            responseView.topAnchor.constraint(equalTo: topStackView.bottomAnchor, constant: 50),
-            responseView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            responseView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
-            responseView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
-        ])
-    }
+    //MARK: - Preferences
     
     func checkScreenOrientation() {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
@@ -226,6 +174,64 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     
+    //MARK: - Background
+    
+    func backgroundSetup() {
+        let backgroundAnimated = AnimatedBackgroundView()
+        let hostingController = UIHostingController(rootView: backgroundAnimated)
+        hostingController.view?.translatesAutoresizingMaskIntoConstraints = false
+        hostingController.view.backgroundColor = .background
+        
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    
+    //MARK: - Messages UI
+    
+    func messagesSetup() {
+        //temporary label for requests
+        requestView.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        requestView.textColor = .label
+        requestView.textAlignment = .left
+        requestView.backgroundColor = .systemGray5
+        requestView.numberOfLines = 10
+        requestView.translatesAutoresizingMaskIntoConstraints = false
+        requestView.text = fieldText.text
+        
+        view.addSubview(requestView)
+        NSLayoutConstraint.activate([
+            requestView.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -50),
+            requestView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            requestView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
+            requestView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
+        ])
+        
+        //temporary label for responses
+        responseView.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        responseView.textColor = .label
+        responseView.textAlignment = .left
+        responseView.backgroundColor = .systemGray5
+        responseView.numberOfLines = 10
+        responseView.translatesAutoresizingMaskIntoConstraints = false
+        responseView.text = openAiApi.finalResponse
+        
+        view.addSubview(responseView)
+        NSLayoutConstraint.activate([
+            responseView.topAnchor.constraint(equalTo: topStackView.bottomAnchor, constant: 50),
+            responseView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            responseView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
+            responseView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
+        ])
+    }
+    
+    
     //MARK: - Top/Bottom Blur
     
     func topBlurEffectSetup() {
@@ -240,7 +246,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         hostingController.view.backgroundColor = .clear
         
         addChild(hostingController)
-        topStackView.addSubview(hostingController.view)
+        view.insertSubview(hostingController.view, belowSubview: topStackView)
         NSLayoutConstraint.activate([
             hostingController.view.topAnchor.constraint(equalTo: topStackView.topAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: topStackView.leadingAnchor),
@@ -261,7 +267,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         hostingController.view.backgroundColor = .clear
         
         addChild(hostingController)
-        bottomStackView.addSubview(hostingController.view)
+        view.insertSubview(hostingController.view, belowSubview: bottomStackView)
         NSLayoutConstraint.activate([
             hostingController.view.bottomAnchor.constraint(equalTo: bottomStackView.bottomAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: bottomStackView.leadingAnchor),
@@ -325,7 +331,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     func centerDetailLabelButtonSetup() {
         labelStackView.addArrangedSubview(centerDetailLabelButton)
         NSLayoutConstraint.activate([
-            centerDetailLabelButton.widthAnchor.constraint(equalTo: centerDetailLabelButton.titleLabel!.widthAnchor, constant: 10),
+            centerDetailLabelButton.widthAnchor.constraint(equalTo: centerDetailLabelButton.titleLabel!.widthAnchor, constant: -50),
             centerDetailLabelButton.heightAnchor.constraint(equalToConstant: 18)
         ])
     }
@@ -461,6 +467,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             self.fieldPlaceholderCenterConstraint.isActive = true
             self.view.layoutIfNeeded()
         })
+        
         checkFieldPlaceholder()
         checkDismissButton()
         checkEraseButton()
@@ -482,7 +489,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             }
         }
         
-        UIView.animate(withDuration: 0.1, animations: {
+        UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseInOut, animations: {
             self.view.layoutIfNeeded()
             self.loadShadows()
         })
@@ -562,7 +569,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             })
         }
         
-        UIView.animate(withDuration: 0.2, animations: {
+        UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut, animations: {
             self.fieldTextHeightConstraint.constant = 46
             self.eraseButton.alpha = 0
             self.view.layoutIfNeeded()
@@ -648,20 +655,21 @@ class ViewController: UIViewController, UITextViewDelegate {
         aiPickerContainer.translatesAutoresizingMaskIntoConstraints = false
         aiPickerContainer.layer.cornerRadius = 25
         aiPickerContainer.clipsToBounds = true
-        view.addSubview(aiPickerContainer)
+        view.insertSubview(aiPickerContainer, belowSubview: bottomStackView)
         
         aiPickerShadowView.translatesAutoresizingMaskIntoConstraints = false
         aiPickerShadowView.layer.cornerRadius = 25
         aiPickerShadowView.clipsToBounds = true
-        bottomStackView.insertSubview(aiPickerShadowView, belowSubview: aiPickerContainer)
+        view.insertSubview(aiPickerShadowView, belowSubview: aiPickerContainer)
         
         NSLayoutConstraint.activate([
-            aiPickerContainer.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -10),
+            aiPickerContainer.bottomAnchor.constraint(equalTo: aiButton.bottomAnchor),
             aiPickerContainer.centerXAnchor.constraint(equalTo: aiButton.centerXAnchor),
-            aiPickerContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 240),
-            aiPickerContainer.widthAnchor.constraint(equalToConstant: 50),
+            aiPickerContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 200),
+            aiPickerContainer.widthAnchor.constraint(equalTo: aiButton.widthAnchor),
             
             aiPickerShadowView.bottomAnchor.constraint(equalTo: aiPickerContainer.bottomAnchor),
+            aiPickerShadowView.centerXAnchor.constraint(equalTo: aiPickerContainer.centerXAnchor),
             aiPickerShadowView.heightAnchor.constraint(equalTo: aiPickerContainer.heightAnchor),
             aiPickerShadowView.widthAnchor.constraint(equalTo: aiPickerContainer.widthAnchor)
         ])
@@ -691,12 +699,12 @@ class ViewController: UIViewController, UITextViewDelegate {
         aiPickerStack.alignment = .top
         aiPickerStack.spacing = 4
         
-        aiPickerView.addSubview(aiPickerStack)
+        aiPickerView.insertSubview(aiPickerStack, aboveSubview: aiPickerContainer)
         NSLayoutConstraint.activate([
-            aiPickerStack.leadingAnchor.constraint(equalTo: aiPickerView.leadingAnchor, constant: 4),
-            aiPickerStack.trailingAnchor.constraint(equalTo: aiPickerView.trailingAnchor, constant: -4),
-            aiPickerStack.topAnchor.constraint(equalTo: aiPickerView.topAnchor, constant: 4),
-            aiPickerStack.bottomAnchor.constraint(equalTo: aiPickerView.bottomAnchor, constant: -4)
+            aiPickerStack.leadingAnchor.constraint(equalTo: aiPickerView.leadingAnchor, constant: 6),
+            aiPickerStack.trailingAnchor.constraint(equalTo: aiPickerView.trailingAnchor, constant: -6),
+            aiPickerStack.topAnchor.constraint(equalTo: aiPickerView.topAnchor, constant: 6),
+            aiPickerStack.bottomAnchor.constraint(equalTo: aiPickerView.bottomAnchor, constant: -56)
         ])
     }
     
@@ -709,7 +717,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             NSLayoutConstraint.activate([
                 button.leadingAnchor.constraint(equalTo: aiPickerStack.leadingAnchor),
                 button.trailingAnchor.constraint(equalTo: aiPickerStack.trailingAnchor)
-                ])
+            ])
             
             if index < aiPickerModel.buttons.count - 1 {
                 let aiPickerSpacer = AiPickerSpacer()
@@ -720,6 +728,23 @@ class ViewController: UIViewController, UITextViewDelegate {
                     aiPickerSpacer.leadingAnchor.constraint(equalTo: aiPickerStack.leadingAnchor, constant: 4),
                     aiPickerSpacer.trailingAnchor.constraint(equalTo: aiPickerStack.trailingAnchor, constant: -4)
                 ])
+            }
+        }
+    }
+    
+    @objc func handleButtonTap(_ notification: Notification) {
+        if let button = notification.object as? PickerButton {
+            UIView.animate(withDuration: 0.1, animations: {
+                self.centerLabel.alpha = 0
+                self.centerDetailLabelButton.alpha = 0
+                ShadowManager().applyShadow(to: self.labelStackView, opacity: 0, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
+            }) { _ in
+                self.centerLabel.text = button.title
+                UIView.animate(withDuration: 0.1, delay: 0.1, options: .curveLinear, animations: {
+                    self.centerLabel.alpha = 1
+                    self.centerDetailLabelButton.alpha = 1
+                    ShadowManager().applyShadow(to: self.labelStackView, opacity: 0.1, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
+                })
             }
         }
     }
@@ -781,7 +806,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         })
         
         if eraseButton.alpha != 0 {
-            UIView.animate(withDuration: 0.2, animations: {
+            UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut, animations: {
                 self.fieldTextHeightConstraint.constant = 46
                 self.eraseButton.alpha = 0
                 self.view.layoutIfNeeded()

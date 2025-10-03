@@ -9,26 +9,28 @@ import UIKit
 
 class AiPickerButton: UIButton {
     
-    var action: (() -> Void)?
+    var action: ((PickerButton) -> Void)?
+    var model: PickerButton?
     
-    init(model: Button) {
+    init(model: PickerButton) {
         super.init(frame: .zero)
         buttonSetup(with: model)
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        fatalError( "aiPickerButton error \n init(coder:) has not been implemented" )
+        fatalError("aiPickerButton error \n init(coder:) has not been implemented")
     }
     
-    func buttonSetup(with model: Button) {
+    func buttonSetup(with model: PickerButton) {
         translatesAutoresizingMaskIntoConstraints = false
         imageView?.contentMode = .scaleAspectFit
         setImage(model.image, for: .normal)
         tintColor = .systemGray2
         backgroundColor = .clear
-        layer.cornerRadius = 21
+        layer.cornerRadius = 19
         alpha = 0.9
+        self.model = model
         self.action = model.action
         
         addTarget(self, action: #selector(buttonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
@@ -43,19 +45,24 @@ class AiPickerButton: UIButton {
         ])
     }
     
-    
-    
     @objc func buttonTouchDown() {
-        backgroundColor = .systemGray
+        tintColor = .white
+        backgroundColor = .systemGray3
     }
     
     @objc func buttonCancel() {
+        tintColor = .systemGray2
         backgroundColor = .clear
     }
     
     @objc func buttonTouchUp() {
+        tintColor = .systemGray2
         backgroundColor = .clear
-        action?()
+        
+        if let model = model {
+            action?(model)
+        }
+
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }

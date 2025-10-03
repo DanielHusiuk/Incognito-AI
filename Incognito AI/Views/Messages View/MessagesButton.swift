@@ -23,7 +23,7 @@ class MessagesButton: UIButton {
     
     func buttonSetup() {
         translatesAutoresizingMaskIntoConstraints = false
-        setTitle("10 messages left", for: .normal)
+        setTitle("777 messages left", for: .normal)
         setTitleColor(.lightText, for: .normal)
         self.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         self.titleLabel?.textAlignment = .center
@@ -37,7 +37,7 @@ class MessagesButton: UIButton {
     }
     
     @objc func messagesButtonTouchDown() {
-        backgroundColor = UIColor(named: "MessagesButtonColor")
+        backgroundColor = .messagesButton
     }
     
     @objc func messagesButtonCancel() {

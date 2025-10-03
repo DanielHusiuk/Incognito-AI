@@ -9,22 +9,55 @@ import UIKit
 
 class MessagesViewController: UIViewController {
     
-    let navigationBar: UINavigationBar! = .init(frame: .zero)
+    let backgroundView: UIView! = .init(frame: .zero)
+    let messagesTitle: UILabel! = .init(frame: .zero)
     let closeButton: UIButton! = .init(frame: .zero)
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationBarSetup()
+        
+        backgroundSetup()
+        titleSetup()
         closeButtonSetup()
     }
     
-    func navigationBarSetup() {
-        view.backgroundColor = .systemBackground
-        navigationBar.translatesAutoresizingMaskIntoConstraints = false
-        navigationBar.prefersLargeTitles = false
-        navigationBar.isTranslucent = true
-        navigationItem.title = "What is messages?"
-        view.addSubview(navigationBar)
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle {
+            backgroundView.layer.borderColor = UIColor.systemGray5.cgColor
+        }
+    }
+    
+    func backgroundSetup() {
+        view.backgroundColor = .clear
+        backgroundView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundView.backgroundColor = .systemGray6
+        backgroundView.layer.cornerRadius = 30
+        backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        backgroundView.layer.borderColor = UIColor.systemGray5.cgColor
+        backgroundView.layer.borderWidth = 2
+        view.addSubview(backgroundView)
+        
+        NSLayoutConstraint.activate([
+            backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 2),
+            backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+    }
+    
+    func titleSetup() {        
+        messagesTitle.translatesAutoresizingMaskIntoConstraints = false
+        messagesTitle.text = "What is messages?"
+        messagesTitle.textColor = .systemBlack
+        messagesTitle.textAlignment = .center
+        messagesTitle.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        view.addSubview(messagesTitle)
+        
+        NSLayoutConstraint.activate([
+            messagesTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
+            messagesTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
     }
     
     func closeButtonSetup() {
@@ -45,9 +78,9 @@ class MessagesViewController: UIViewController {
         
         view.addSubview(closeButton)
         NSLayoutConstraint.activate([
-            closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
-            closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-            closeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 25),
+            closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -25),
+            closeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -15),
             closeButton.heightAnchor.constraint(equalToConstant: 55)
         ])
     }
