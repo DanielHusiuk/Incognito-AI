@@ -47,17 +47,21 @@ class AiPickerButton: UIButton {
     
     @objc func buttonTouchDown() {
         tintColor = .white
-        backgroundColor = .systemGray3
+        backgroundColor = .systemGray4
     }
     
     @objc func buttonCancel() {
-        tintColor = .systemGray2
-        backgroundColor = .clear
+        UIView.animate(withDuration: 0.1, animations: {
+            self.tintColor = .systemGray2
+            self.backgroundColor = .clear
+        })
     }
     
     @objc func buttonTouchUp() {
-        tintColor = .systemGray2
-        backgroundColor = .clear
+        UIView.animate(withDuration: 0.1, animations: {
+            self.tintColor = .systemGray2
+            self.backgroundColor = .clear
+        })
         
         if let model = model {
             action?(model)
@@ -65,6 +69,20 @@ class AiPickerButton: UIButton {
 
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+    }
+    
+    func setSelected(_ selected: Bool) {
+        if selected {
+            tintColor = .pickedButtonGray
+            backgroundColor = .systemGray4
+            isEnabled = false
+        } else {
+            UIView.animate(withDuration: 0.1, animations: {
+                self.tintColor = .systemGray2
+                self.backgroundColor = .clear
+                self.isEnabled = true
+            })
         }
     }
     

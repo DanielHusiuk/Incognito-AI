@@ -68,5 +68,7 @@ struct AiPickerModel {
 
 func didTapButton(_ button: PickerButton) {
     UserDefaults.standard.set(button.id, forKey: "buttonId")
+    UserDefaults.standard.set(button.title, forKey: "buttonTitle")
+    UserDefaults.standard.set(button.token, forKey: "buttonToken")
     NotificationCenter.default.post(name: Notification.Name("pickerButtonTapped"), object: button)
 }

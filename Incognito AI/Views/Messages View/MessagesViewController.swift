@@ -15,7 +15,6 @@ class MessagesViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         backgroundSetup()
         titleSetup()
         closeButtonSetup()
@@ -90,11 +89,15 @@ class MessagesViewController: UIViewController {
     }
     
     @objc func closeButtonCancel() {
-        closeButton.alpha = 1
+        UIView.animate(withDuration: 0.1, animations: {
+            self.closeButton.alpha = 1
+        })
     }
     
     @objc func closeButtonTouchUp() {
-        closeButton.alpha = 1
+        UIView.animate(withDuration: 0.1, animations: {
+            self.closeButton.alpha = 1
+        })
         dismiss(animated: true)
     }
 

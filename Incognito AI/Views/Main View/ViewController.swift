@@ -311,7 +311,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     func labelStackViewSetup() {
         labelStackView.axis = .vertical
-        labelStackView.distribution = .equalSpacing
+        labelStackView.alignment = .center
         labelStackView.translatesAutoresizingMaskIntoConstraints = false
         topStackView.addSubview(labelStackView)
         
@@ -323,6 +323,8 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     func centerLabelSetup() {
         labelStackView.addArrangedSubview(centerLabel)
+        guard UserDefaults.standard.value(forKey: "buttonTitle") != nil else { return }
+        centerLabel.text = UserDefaults.standard.string(forKey: "buttonTitle")
     }
     
     
@@ -331,7 +333,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     func centerDetailLabelButtonSetup() {
         labelStackView.addArrangedSubview(centerDetailLabelButton)
         NSLayoutConstraint.activate([
-            centerDetailLabelButton.widthAnchor.constraint(equalTo: centerDetailLabelButton.titleLabel!.widthAnchor, constant: -50),
+            centerDetailLabelButton.widthAnchor.constraint(equalTo: centerDetailLabelButton.titleLabel!.widthAnchor, constant: 12),
             centerDetailLabelButton.heightAnchor.constraint(equalToConstant: 18)
         ])
     }
@@ -535,7 +537,10 @@ class ViewController: UIViewController, UITextViewDelegate {
         eraseButton.tintColor = .systemGray2
         eraseButton.layer.cornerRadius = 22.5
         eraseButton.alpha = 0
-        eraseButton.addTarget(self, action: #selector(eraseText), for: .touchUpInside)
+        
+        eraseButton.addTarget(self, action: #selector(eraseTextDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
+        eraseButton.addTarget(self, action: #selector(eraseTextCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        eraseButton.addTarget(self, action: #selector(eraseTextUp), for: [.touchUpInside])
         
         bottomStackView.addSubview(eraseButton)
         NSLayoutConstraint.activate([
@@ -558,7 +563,21 @@ class ViewController: UIViewController, UITextViewDelegate {
         }
     }
     
-    @objc func eraseText() {
+    @objc func eraseTextDown() {
+        eraseButton.tintColor = .systemGray
+    }
+    
+    @objc func eraseTextCancel() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.eraseButton.tintColor = .systemGray2
+        })
+    }
+    
+    @objc func eraseTextUp() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.eraseButton.tintColor = .systemGray2
+        })
+        
         fieldText.text.append("\n")
         AnimationManager().animateTextWithBottomSlide(label: fieldText, newText: "", duration: 0.15)
         
@@ -575,7 +594,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             self.view.layoutIfNeeded()
             self.loadShadows()
         })
-        AnimationManager().animateLabelWithBottomSlide(label: fieldPlaceholder, duration: 0.15)
+        AnimationManager().animateLabelWithBottomSlide(view: fieldPlaceholder, duration: 0.15)
         
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -604,15 +623,19 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     @objc func aiButtonCancel() {
-        aiButton.tintColor = .systemGray2
-        aiButton.backgroundColor = .systemGray6
-        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
+        UIView.animate(withDuration: 0.1, animations: {
+            self.aiButton.tintColor = .systemGray2
+            self.aiButton.backgroundColor = .systemGray6
+            self.aiButton.layer.borderColor = UIColor.systemGray5.cgColor
+        })
     }
     
     @objc func aiButtonTouchUp() {
-        aiButton.tintColor = .systemGray2
-        aiButton.backgroundColor = .systemGray6
-        aiButton.layer.borderColor = UIColor.systemGray5.cgColor
+        UIView.animate(withDuration: 0.1, animations: {
+            self.aiButton.tintColor = .systemGray2
+            self.aiButton.backgroundColor = .systemGray6
+            self.aiButton.layer.borderColor = UIColor.systemGray5.cgColor
+        })
         
         if aiPickerView.isHidden {
             //show
@@ -713,6 +736,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             let button = AiPickerButton(model: buttonModel)
             aiPickerButtons.append(button)
             aiPickerStack.addArrangedSubview(button)
+            button.addTarget(self, action: #selector(pickerButtonTap(_:)), for: .touchUpInside)
             
             NSLayoutConstraint.activate([
                 button.leadingAnchor.constraint(equalTo: aiPickerStack.leadingAnchor),
@@ -730,22 +754,49 @@ class ViewController: UIViewController, UITextViewDelegate {
                 ])
             }
         }
+        
+        if let savedButton = UserDefaults.standard.object(forKey: "buttonId") as? Int {
+            aiPickerButtons[savedButton].setSelected(true)
+        }
+    }
+    
+
+    
+    @objc func pickerButtonTap(_ sender: AiPickerButton) {
+        for button in aiPickerButtons {
+            let isSelected = (button.model?.id == sender.model?.id)
+            button.setSelected(isSelected)
+        }
     }
     
     @objc func handleButtonTap(_ notification: Notification) {
-        if let button = notification.object as? PickerButton {
-            UIView.animate(withDuration: 0.1, animations: {
-                self.centerLabel.alpha = 0
-                self.centerDetailLabelButton.alpha = 0
-                ShadowManager().applyShadow(to: self.labelStackView, opacity: 0, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
-            }) { _ in
-                self.centerLabel.text = button.title
-                UIView.animate(withDuration: 0.1, delay: 0.1, options: .curveLinear, animations: {
-                    self.centerLabel.alpha = 1
-                    self.centerDetailLabelButton.alpha = 1
-                    ShadowManager().applyShadow(to: self.labelStackView, opacity: 0.1, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
-                })
-            }
+        guard let button = notification.object as? PickerButton else { return }
+        
+        //center label
+        AnimationManager().animateLabelWithBottomSlide(view: self.centerLabel, duration: 0.15)
+        AnimationManager().animateLabelWithBottomSlide(view: self.centerDetailLabelButton, duration: 0.15)
+        UIView.animate(withDuration: 0.1, delay: 0.05, options: .curveLinear, animations: {
+            ShadowManager().applyShadow(to: self.labelStackView, opacity: 0, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
+        }, completion: { _ in
+            self.centerLabel.text = button.title
+            //self.centerDetailLabelButton.titleLabel?.text = messages count
+            UIView.animate(withDuration: 0.1, delay: 0.1, options: .curveLinear, animations: {
+                ShadowManager().applyShadow(to: self.labelStackView, opacity: 0.1, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
+            })
+        })
+        
+        //picker
+        UIView.animate(withDuration: 0.2, animations: {
+            ShadowManager().applyShadow(to: self.aiPickerShadowView, opacity: 0, shadowRadius: 0, viewBounds: self.aiPickerShadowView.bounds.insetBy(dx: 0, dy: 0))
+        })
+        UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut, animations: {
+            self.aiButton.transform = CGAffineTransform(rotationAngle: .pi * 2)
+            self.aiPickerView.transform = CGAffineTransform(translationX: 0, y: 262)
+        })
+        UIView.animate(withDuration: 0.2, delay: 0.3, options: .curveLinear, animations: {
+            self.aiPickerView.alpha = 0
+        }) { _ in
+            self.aiPickerView.isHidden = true
         }
     }
     
@@ -781,13 +832,17 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     @objc func sendButtonCancel() {
-        sendButton.backgroundColor = #colorLiteral(red: 0.02999999933, green: 0.02999999933, blue: 0.02999999933, alpha: 1)
-        sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
+        UIView.animate(withDuration: 0.1, animations: {
+            self.sendButton.backgroundColor = #colorLiteral(red: 0.02999999933, green: 0.02999999933, blue: 0.02999999933, alpha: 1)
+            self.sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
+        })
     }
     
     @objc func sendButtonTouchUp() {
-        sendButton.backgroundColor = #colorLiteral(red: 0.02999999933, green: 0.02999999933, blue: 0.02999999933, alpha: 1)
-        sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
+        UIView.animate(withDuration: 0.1, animations: {
+            self.sendButton.backgroundColor = #colorLiteral(red: 0.02999999933, green: 0.02999999933, blue: 0.02999999933, alpha: 1)
+            self.sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
+        })
         
         guard let text = fieldText.text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         requestView.text = fieldText.text
@@ -814,7 +869,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             })
         }
         
-        AnimationManager().animateLabelWithTopSlide(label: fieldPlaceholder, duration: 0.15)
+        AnimationManager().animateLabelWithTopSlide(view: fieldPlaceholder, duration: 0.15)
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
@@ -830,8 +885,11 @@ class ViewController: UIViewController, UITextViewDelegate {
         dismissKeyboardButton.tintColor = .systemGray3
         dismissKeyboardButton.backgroundColor = .systemGray6
         dismissKeyboardButton.layer.cornerRadius = 17.5
-        dismissKeyboardButton.addTarget(self, action: #selector(dismissKeyboard), for: .touchUpInside)
         dismissKeyboardButton.alpha = 0
+        
+        dismissKeyboardButton.addTarget(self, action: #selector(dismissKeyboardDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
+        dismissKeyboardButton.addTarget(self, action: #selector(dismissKeyboardCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        dismissKeyboardButton.addTarget(self, action: #selector(dismissKeyboardUp), for: [.touchUpInside])
         
         view.addSubview(dismissKeyboardButton)
         NSLayoutConstraint.activate([
@@ -842,7 +900,21 @@ class ViewController: UIViewController, UITextViewDelegate {
         ])
     }
     
-    @objc func dismissKeyboard(_ sender: UIButton) {
+    @objc func dismissKeyboardDown(_ sender: UIButton) {
+        dismissKeyboardButton.tintColor = .systemGray
+    }
+    
+    @objc func dismissKeyboardCancel(_ sender: UIButton) {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.dismissKeyboardButton.tintColor = .systemGray3
+        })
+    }
+    
+    @objc func dismissKeyboardUp(_ sender: UIButton) {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.dismissKeyboardButton.tintColor = .systemGray
+        })
+        
         UserDefaults.standard.set(false, forKey: "isEditing")
         fieldText.endEditing(true)
     }

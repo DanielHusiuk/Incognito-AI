@@ -41,11 +41,16 @@ class MessagesButton: UIButton {
     }
     
     @objc func messagesButtonCancel() {
-        backgroundColor = .clear
+        UIView.animate(withDuration: 0.1, animations: {
+            self.backgroundColor = .clear
+        })
     }
     
     @objc func messagesButtonTouchUp() {
-        backgroundColor = .clear
+        UIView.animate(withDuration: 0.1, animations: {
+            self.backgroundColor = .clear
+        })
+        
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }

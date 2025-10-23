@@ -40,11 +40,16 @@ class SettingsButton: UIButton {
     }
     
     @objc func settingsButtonCancel() {
-        isHighlighted = false
+        UIView.animate(withDuration: 0.1, animations: {
+            self.isHighlighted = false
+        })
     }
     
     @objc func settingsButtonTouchUp() {
-        isHighlighted = false
+        UIView.animate(withDuration: 0.1, animations: {
+            self.isHighlighted = false
+        })
+        
         UIApplication.shared.connectedScenes
             .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
             .first?.rootViewController?

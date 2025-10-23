@@ -38,11 +38,16 @@ class NewChatButton: UIButton {
     }
     
     @objc func newChatButtonCancel() {
-        isHighlighted = false
+        UIView.animate(withDuration: 0.1, animations: {
+            self.isHighlighted = false
+        })
     }
     
     @objc func newChatButtonTouchUp() {
-        isHighlighted = false
+        UIView.animate(withDuration: 0.1, animations: {
+            self.isHighlighted = false
+        })
+        
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }

@@ -42,30 +42,30 @@ class AnimationManager {
     
     //MARK: - UILabel
     
-    func animateLabelWithTopSlide(label: UILabel, duration: TimeInterval) {
+    func animateLabelWithTopSlide(view: UIView, duration: TimeInterval) {
         let transform = CGAffineTransform(translationX: 0, y: -12)
         UIView.animate(withDuration: duration, animations: {
-            label.transform = transform
-            label.alpha = 0
+            view.transform = transform
+            view.alpha = 0
         }) { _ in
-            label.transform = CGAffineTransform(translationX: 0, y: 12)
+            view.transform = CGAffineTransform(translationX: 0, y: 12)
             UIView.animate(withDuration: duration) {
-                label.transform = .identity
-                label.alpha = 1
+                view.transform = .identity
+                view.alpha = 1
             }
         }
     }
     
-    func animateLabelWithBottomSlide(label: UILabel, duration: TimeInterval) {
+    func animateLabelWithBottomSlide(view: UIView, duration: TimeInterval) {
         let transform = CGAffineTransform(translationX: 0, y: 12)
         UIView.animate(withDuration: duration, animations: {
-            label.transform = transform
-            label.alpha = 0
+            view.transform = transform
+            view.alpha = 0
         }) { _ in
-            label.transform = CGAffineTransform(translationX: 0, y: -12)
+            view.transform = CGAffineTransform(translationX: 0, y: -12)
             UIView.animate(withDuration: duration) {
-                label.transform = .identity
-                label.alpha = 1
+                view.transform = .identity
+                view.alpha = 1
             }
         }
     }

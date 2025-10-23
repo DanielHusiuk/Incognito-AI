@@ -92,11 +92,15 @@ class SettingsViewController: UIViewController {
     }
     
     @objc func closeSettingsButtonCancel() {
-        closeSettingsButton.alpha = 1
+        UIView.animate(withDuration: 0.1, animations: {
+            self.closeSettingsButton.alpha = 1
+        })
     }
     
     @objc func closeSettingsButtonTouchUp() {
-        closeSettingsButton.alpha = 1
+        UIView.animate(withDuration: 0.1, animations: {
+            self.closeSettingsButton.alpha = 1
+        })
         dismiss(animated: true)
     }
     
@@ -108,9 +112,12 @@ class SettingsViewController: UIViewController {
         resetSettingsButton.tintColor = .systemGray
         resetSettingsButton.backgroundColor = .secondarySystemBackground
         resetSettingsButton.layer.cornerRadius = 15
-        resetSettingsButton.addTarget(self, action: #selector(resetSettings), for: .touchUpInside)
-        view.addSubview(resetSettingsButton)
         
+        resetSettingsButton.addTarget(self, action: #selector(resetSettingsButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
+        resetSettingsButton.addTarget(self, action: #selector(resetSettingsButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        resetSettingsButton.addTarget(self, action: #selector(resetSettingsTouchUp), for: .touchUpInside)
+        
+        view.addSubview(resetSettingsButton)
         NSLayoutConstraint.activate([
             resetSettingsButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 15),
             resetSettingsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
@@ -119,7 +126,20 @@ class SettingsViewController: UIViewController {
         ])
     }
     
-    @objc func resetSettings() {
+    @objc func resetSettingsButtonTouchDown() {
+        resetSettingsButton.alpha = 0.5
+    }
+    
+    @objc func resetSettingsButtonCancel() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.resetSettingsButton.alpha = 1
+        })
+    }
+    
+    @objc func resetSettingsTouchUp() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.resetSettingsButton.alpha = 1
+        })
         dismiss(animated: true)
     }
     
