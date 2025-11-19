@@ -28,7 +28,6 @@ class SettingsButton: UIButton {
         setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20, weight: .regular), forImageIn: .normal)
         tintColor = .white
         layer.cornerRadius = 25
-        alpha = 0.9
         
         addTarget(self, action: #selector(settingsButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         addTarget(self, action: #selector(settingsButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])

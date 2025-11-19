@@ -25,7 +25,6 @@ class CenterLabel: UILabel {
         textAlignment = .center
         font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         translatesAutoresizingMaskIntoConstraints = false
-        alpha = 0.9
     }
 
 }

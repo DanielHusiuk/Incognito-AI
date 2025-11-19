@@ -29,7 +29,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     let aiPickerStack: UIStackView = .init(frame: .zero)
     let aiPickerModel = AiPickerModel()
     var aiPickerButtons: [AiPickerButton] = []
-    let aiPickerShadowView: UIView = .init(frame: .zero)
+    var aiPickerShadowView: UIView = .init(frame: .zero)
     
     let fieldView: UIView = .init(frame: .zero)
     let fieldText: UITextView = .init(frame: .zero)
@@ -46,19 +46,19 @@ class ViewController: UIViewController, UITextViewDelegate {
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
     
     let openAiApi = ApiManager()
-    let requestView = UILabel()
-    let responseView = UILabel()
+    let messagesCollectionView = MessagesCollectionView()
+    var messagesCollectionViewBottomConstraint: NSLayoutConstraint!
+    private var topBlurHostingController: UIViewController?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundSetup()
+        collectionViewSetup()
         
         loadUserDefaults()
         loadTopView()
         loadBottomView()
         loadNotifications()
-        
-        messagesSetup()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -78,9 +78,22 @@ class ViewController: UIViewController, UITextViewDelegate {
         }
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        self.view.window?.windowScene?.screenshotService?.delegate = self
+    }
+    
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         UserDefaults.standard.set(false, forKey: "isEditing")
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate(alongsideTransition: { _ in
+            self.messagesCollectionView.collectionViewLayout.invalidateLayout()
+            self.topBlurHostingController?.view.layoutIfNeeded()
+        })
     }
     
     
@@ -152,6 +165,7 @@ class ViewController: UIViewController, UITextViewDelegate {
                         self.topStackView.alpha = 1
                         self.settingsButton.alpha = 1
                         self.newChatButton.alpha = 1
+                        self.topBlurHostingController?.view.alpha = 1
                         if UserDefaults.standard.bool(forKey: "isEditing") { self.fieldText.becomeFirstResponder() }
                         print(UserDefaults.standard.bool(forKey: "isEditing"))
                     })
@@ -165,6 +179,7 @@ class ViewController: UIViewController, UITextViewDelegate {
                         self.topStackView.alpha = 0
                         self.settingsButton.alpha = 0
                         self.newChatButton.alpha = 0
+                        self.topBlurHostingController?.view.alpha = 0
                         if UserDefaults.standard.bool(forKey: "isEditing") { self.fieldText.becomeFirstResponder() }
                         print(UserDefaults.standard.bool(forKey: "isEditing"))
                     })
@@ -195,39 +210,15 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     //MARK: - Messages UI
     
-    func messagesSetup() {
-        //temporary label for requests
-        requestView.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        requestView.textColor = .label
-        requestView.textAlignment = .left
-        requestView.backgroundColor = .systemGray5
-        requestView.numberOfLines = 10
-        requestView.translatesAutoresizingMaskIntoConstraints = false
-        requestView.text = fieldText.text
+    func collectionViewSetup() {
+        messagesCollectionViewBottomConstraint = messagesCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         
-        view.addSubview(requestView)
+        view.addSubview(messagesCollectionView)
         NSLayoutConstraint.activate([
-            requestView.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -50),
-            requestView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            requestView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
-            requestView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
-        ])
-        
-        //temporary label for responses
-        responseView.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        responseView.textColor = .label
-        responseView.textAlignment = .left
-        responseView.backgroundColor = .systemGray5
-        responseView.numberOfLines = 10
-        responseView.translatesAutoresizingMaskIntoConstraints = false
-        responseView.text = openAiApi.finalResponse
-        
-        view.addSubview(responseView)
-        NSLayoutConstraint.activate([
-            responseView.topAnchor.constraint(equalTo: topStackView.bottomAnchor, constant: 50),
-            responseView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            responseView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 50),
-            responseView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -50)
+            messagesCollectionView.topAnchor.constraint(equalTo: view.topAnchor),
+            messagesCollectionViewBottomConstraint,
+            messagesCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            messagesCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
     
@@ -238,7 +229,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         let blurEffect = BlurView()
             .blur(radius: 15)
             .padding(.horizontal, -100)
-            .padding(.top, -70)
+            .padding(.top, -100)
             .colorScheme(.light)
         
         let hostingController = UIHostingController(rootView: blurEffect)
@@ -251,15 +242,16 @@ class ViewController: UIViewController, UITextViewDelegate {
             hostingController.view.topAnchor.constraint(equalTo: topStackView.topAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: topStackView.leadingAnchor),
             hostingController.view.trailingAnchor.constraint(equalTo: topStackView.trailingAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: topStackView.bottomAnchor)
+            hostingController.view.bottomAnchor.constraint(equalTo: topStackView.bottomAnchor, constant: 20)
         ])
+        self.topBlurHostingController = hostingController
     }
     
     func bottomBlurEffectSetup() {
         let blurEffect = BlurView()
             .blur(radius: 15)
             .padding(.horizontal, -100)
-            .padding(.bottom, -70)
+            .padding(.bottom, -150)
             .colorScheme(.light)
         
         let hostingController = UIHostingController(rootView: blurEffect)
@@ -389,7 +381,6 @@ class ViewController: UIViewController, UITextViewDelegate {
         fieldView.layer.borderWidth = 2
         fieldView.layer.borderColor = UIColor.systemGray5.cgColor
         fieldView.layer.cornerRadius = 25
-        fieldView.alpha = 0.9
         
         bottomStackView.addArrangedSubview(fieldView)
         NSLayoutConstraint.activate([
@@ -409,7 +400,6 @@ class ViewController: UIViewController, UITextViewDelegate {
         fieldText.autocorrectionType = .yes
         fieldText.backgroundColor = .clear
         fieldText.textColor = .label
-        fieldText.alpha = 0.9
         fieldText.isScrollEnabled = false
         fieldText.clipsToBounds = true
         fieldText.textContainerInset = .init(top: 13, left: 0, bottom: 13, right: 3.5)
@@ -639,8 +629,10 @@ class ViewController: UIViewController, UITextViewDelegate {
         
         if aiPickerView.isHidden {
             //show
-            aiPickerView.alpha = 0.9
+            aiPickerView.alpha = 1
             aiPickerView.isHidden = false
+            aiPickerContainer.isUserInteractionEnabled = true
+            aiPickerShadowView.isUserInteractionEnabled = true
             
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut, animations: {
                 self.aiButton.transform = CGAffineTransform(rotationAngle: -.pi)
@@ -652,6 +644,9 @@ class ViewController: UIViewController, UITextViewDelegate {
             })
         } else {
             //hide
+            aiPickerContainer.isUserInteractionEnabled = false
+            aiPickerShadowView.isUserInteractionEnabled = false
+            
             UIView.animate(withDuration: 0.2, animations: {
                 ShadowManager().applyShadow(to: self.aiPickerShadowView, opacity: 0, shadowRadius: 0, viewBounds: self.aiPickerShadowView.bounds.insetBy(dx: 0, dy: 0))
             })
@@ -678,11 +673,13 @@ class ViewController: UIViewController, UITextViewDelegate {
         aiPickerContainer.translatesAutoresizingMaskIntoConstraints = false
         aiPickerContainer.layer.cornerRadius = 25
         aiPickerContainer.clipsToBounds = true
+        aiPickerContainer.isUserInteractionEnabled = false
         view.insertSubview(aiPickerContainer, belowSubview: bottomStackView)
         
         aiPickerShadowView.translatesAutoresizingMaskIntoConstraints = false
         aiPickerShadowView.layer.cornerRadius = 25
         aiPickerShadowView.clipsToBounds = true
+        aiPickerShadowView.isUserInteractionEnabled = false
         view.insertSubview(aiPickerShadowView, belowSubview: aiPickerContainer)
         
         NSLayoutConstraint.activate([
@@ -760,8 +757,6 @@ class ViewController: UIViewController, UITextViewDelegate {
         }
     }
     
-
-    
     @objc func pickerButtonTap(_ sender: AiPickerButton) {
         for button in aiPickerButtons {
             let isSelected = (button.model?.id == sender.model?.id)
@@ -771,6 +766,8 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     @objc func handleButtonTap(_ notification: Notification) {
         guard let button = notification.object as? PickerButton else { return }
+        aiPickerContainer.isUserInteractionEnabled = false
+        aiPickerShadowView.isUserInteractionEnabled = false
         
         //center label
         AnimationManager().animateLabelWithBottomSlide(view: self.centerLabel, duration: 0.15)
@@ -813,7 +810,6 @@ class ViewController: UIViewController, UITextViewDelegate {
         sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
         sendButton.layer.borderWidth = 2
         sendButton.layer.cornerRadius = 25
-        sendButton.alpha = 0.9
         
         sendButton.addTarget(self, action: #selector(sendButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         sendButton.addTarget(self, action: #selector(sendButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
@@ -845,11 +841,8 @@ class ViewController: UIViewController, UITextViewDelegate {
         })
         
         guard let text = fieldText.text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        requestView.text = fieldText.text
         openAiApi.userMessage = fieldText.text
-        
-        openAiApi.loadData()
-        print(openAiApi.finalResponse)
+        openAiApi.sendData()
         
         AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
         fieldText.endEditing(true)
@@ -882,7 +875,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         dismissKeyboardButton.translatesAutoresizingMaskIntoConstraints = false
         dismissKeyboardButton.imageView?.contentMode = .scaleAspectFit
         dismissKeyboardButton.setImage(UIImage(systemName: "keyboard.chevron.compact.down"), for: .normal)
-        dismissKeyboardButton.tintColor = .systemGray3
+        dismissKeyboardButton.tintColor = .systemGray2
         dismissKeyboardButton.backgroundColor = .systemGray6
         dismissKeyboardButton.layer.cornerRadius = 17.5
         dismissKeyboardButton.alpha = 0
@@ -906,13 +899,13 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     @objc func dismissKeyboardCancel(_ sender: UIButton) {
         UIView.animate(withDuration: 0.1, animations: {
-            self.dismissKeyboardButton.tintColor = .systemGray3
+            self.dismissKeyboardButton.tintColor = .systemGray2
         })
     }
     
     @objc func dismissKeyboardUp(_ sender: UIButton) {
         UIView.animate(withDuration: 0.1, animations: {
-            self.dismissKeyboardButton.tintColor = .systemGray
+            self.dismissKeyboardButton.tintColor = .systemGray2
         })
         
         UserDefaults.standard.set(false, forKey: "isEditing")
@@ -922,7 +915,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     @objc func checkDismissButton() {
         if fieldText.isEditing {
             UIView.animate(withDuration: 0.4, animations: {
-                self.dismissKeyboardButton.alpha = 0.8
+                self.dismissKeyboardButton.alpha = 1
                 self.dismissKeyboardButton.isUserInteractionEnabled = true
             })
         } else {
@@ -936,11 +929,21 @@ class ViewController: UIViewController, UITextViewDelegate {
     @objc func keyboardWillShow(_ notification: Notification) {
         if fieldText.isEditing {
             moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, keyboardWillSHow: true)
+            moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, keyboardWillSHow: true)
+            DispatchQueue.main.async {
+                self.messagesCollectionView.contentInset.bottom = 110
+                self.messagesCollectionView.verticalScrollIndicatorInsets = .init(top: 80, left: 0, bottom: 110, right: 0)
+            }
         }
     }
     
     @objc func keyboardWillHide(_ notification: Notification) {
         moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, keyboardWillSHow: false)
+        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, keyboardWillSHow: false)
+        DispatchQueue.main.async {
+            self.messagesCollectionView.contentInset.bottom = 85
+            self.messagesCollectionView.verticalScrollIndicatorInsets = .init(top: 80, left: 0, bottom: 80, right: 0)
+        }
     }
     
     func moveViewWithKeyboard(notification: Notification, viewBottomConstraint: NSLayoutConstraint, keyboardWillSHow: Bool) {
@@ -974,3 +977,54 @@ extension UITextView {
         isFirstResponder
     }
 }
+
+extension ViewController: UIScreenshotServiceDelegate {
+    
+    func screenshotService(_ screenshotService: UIScreenshotService, generatePDFRepresentationWithCompletion completionHandler: @escaping (Data?, Int, CGRect) -> Void) {
+        
+        DispatchQueue.main.async {
+            let pdfData = NSMutableData()
+            let originalOffset = self.messagesCollectionView.contentOffset
+            let originalFrame = self.messagesCollectionView.frame
+            
+            let contentSize = self.messagesCollectionView.collectionViewLayout.collectionViewContentSize
+            
+            let visibleHeight = self.messagesCollectionView.bounds.height
+            UIGraphicsBeginPDFContextToData(pdfData, CGRect(origin: .zero, size: contentSize), nil)
+            
+            var offsetY: CGFloat = 0
+            var pageIndex = 0
+            
+            while offsetY < contentSize.height {
+                autoreleasepool {
+                    let pageFrame = CGRect(x: 0, y: offsetY, width: contentSize.width, height: min(visibleHeight, contentSize.height - offsetY))
+                    UIGraphicsBeginPDFPageWithInfo(pageFrame, nil)
+                    
+                    guard let context = UIGraphicsGetCurrentContext() else { return }
+                    self.messagesCollectionView.contentOffset = CGPoint(x: 0, y: offsetY)
+                    self.messagesCollectionView.layoutIfNeeded()
+                    
+                    context.saveGState()
+                    context.setFillColor(UIColor.systemBackground.cgColor)
+                    context.fill(pageFrame)
+                    context.restoreGState()
+                    
+                    context.saveGState()
+                    context.translateBy(x: 0, y: -offsetY)
+                    self.messagesCollectionView.layer.render(in: context)
+                    context.restoreGState()
+                    
+                    offsetY += visibleHeight
+                    pageIndex += 1
+                }
+            }
+            UIGraphicsEndPDFContext()
+            
+            self.messagesCollectionView.contentOffset = originalOffset
+            self.messagesCollectionView.frame = originalFrame
+            self.messagesCollectionView.layoutIfNeeded()
+            completionHandler(pdfData as Data, pageIndex, CGRect(origin: .zero, size: contentSize))
+        }
+    }
+}
+

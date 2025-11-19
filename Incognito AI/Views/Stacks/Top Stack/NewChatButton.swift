@@ -26,7 +26,6 @@ class NewChatButton: UIButton {
         setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 22, weight: .regular), forImageIn: .normal)
         tintColor = .white
         layer.cornerRadius = 25
-        alpha = 0.9
         
         addTarget(self, action: #selector(newChatButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         addTarget(self, action: #selector(newChatButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])

@@ -29,7 +29,6 @@ class AiPickerButton: UIButton {
         tintColor = .systemGray2
         backgroundColor = .clear
         layer.cornerRadius = 19
-        alpha = 0.9
         self.model = model
         self.action = model.action
         

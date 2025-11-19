@@ -36,12 +36,12 @@ class ApiManager {
     var token: String = ""
     
     var userMessage: String = ""
-    var finalResponse: String = ""
+    var finalResponse: String? = ""
     var requestBody: ChatRequest?
-
+    
     func sendData() {
         if !userMessage.isEmpty {
-            var requestBody = ChatRequest(
+            requestBody = ChatRequest(
                 model: "openai/gpt-4.1-mini",
                 messages: [
                     ChatMessage(role: "system", content: "You are a helpful assistant in Incognito AI app."),
@@ -50,12 +50,9 @@ class ApiManager {
             )
         }
     }
-
-
-
-    func loadData() {
+    
+    func loadData(completion: @escaping (String?) -> Void) {
         do {
-            guard let requestBody else { return }
             let jsonData = try JSONEncoder().encode(requestBody)
             var request = URLRequest(url: url!)
             request.httpMethod = "POST"
@@ -66,35 +63,46 @@ class ApiManager {
             
             let dataTask = URLSession.shared.dataTask(with: request) { (data, response, error) in
                 if let error = error {
-                    print(error.localizedDescription)
+                    print("Network error:", error.localizedDescription)
+                    completion(nil)
                     return
                 }
                 
-                if let data = data,
-                    let body = String(data: data, encoding: .utf8) {
-                        print("Response body:", body)
-                    }
+                guard let data = data else {
+                    print("No data recieved")
+                    completion(nil)
+                    return
+                }
+                
+                if let body = String(data: data, encoding: .utf8) {
+                    print("Response body:", body)
+                }
                 
                 if let httpResponse = response as? HTTPURLResponse {
                     print("Status code:", httpResponse.statusCode)
-                    
                 }
                 
                 do {
                     let decoder = JSONDecoder()
                     decoder.keyDecodingStrategy = .convertFromSnakeCase
-                    let chatResponse = try decoder.decode(ChatResponse.self, from: data!)
+                    let chatResponse = try decoder.decode(ChatResponse.self, from: data)
                     let assistantMessage = chatResponse.choices.first?.message.content ?? ""
                     
                     print("Assistant says:", assistantMessage)
                     self.finalResponse = assistantMessage
+                    DispatchQueue.main.async {
+                        completion(assistantMessage)
+                    }
                 } catch {
                     print(error.localizedDescription)
+                    completion(nil)
                 }
             }
+            
             dataTask.resume()
         } catch {
-            print(error.localizedDescription)
+            print("Decoding error:", error.localizedDescription)
+            completion(nil)
         }
     }
     

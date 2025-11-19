@@ -29,7 +29,6 @@ class AiButton: UIButton {
         layer.borderColor = UIColor.systemGray5.cgColor
         layer.borderWidth = 2
         layer.cornerRadius = 25
-        alpha = 0.9
         transform = CGAffineTransform(rotationAngle: .pi * 2)
     }
 

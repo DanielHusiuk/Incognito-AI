@@ -14,13 +14,21 @@ class SettingsViewController: UIViewController {
     let settingsTitle: UILabel! = .init(frame: .zero)
     let closeSettingsButton: UIButton! = .init(frame: .zero)
     let resetSettingsButton: UIButton! = .init(frame: .zero)
+    let fadeView: UIView! = .init(frame: .zero)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundSetup()
+        fadeViewSetup()
+        
         titleSetup()
         closeSettingsButtonSetup()
         resetSettingsButtonSetup()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        gradientSetup()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -29,6 +37,9 @@ class SettingsViewController: UIViewController {
             backgroundView.layer.borderColor = UIColor.systemGray5.cgColor
         }
     }
+    
+    
+    //MARK: - Background
     
     func backgroundSetup() {
         view.isOpaque = false
@@ -51,6 +62,35 @@ class SettingsViewController: UIViewController {
             backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
+    
+    func fadeViewSetup() {
+        fadeView.translatesAutoresizingMaskIntoConstraints = false
+        fadeView.isUserInteractionEnabled = false
+        fadeView.backgroundColor = .systemBackground
+        
+        view.addSubview(fadeView)
+        NSLayoutConstraint.activate([
+            fadeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            fadeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            fadeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            fadeView.heightAnchor.constraint(equalTo: view.heightAnchor)
+        ])
+    }
+    
+    func gradientSetup() {
+        let gradient = CAGradientLayer()
+        gradient.frame = fadeView.bounds
+        
+        gradient.colors = [
+            UIColor.black.withAlphaComponent(0.0).cgColor,
+            UIColor.black.withAlphaComponent(1.0).cgColor
+        ]
+        gradient.locations = [0.0, 0.8]
+        fadeView.layer.mask = gradient
+    }
+    
+    
+    //MARK: - Navigation Bar
     
     func titleSetup() {
         settingsTitle.translatesAutoresizingMaskIntoConstraints = false
@@ -142,5 +182,8 @@ class SettingsViewController: UIViewController {
         })
         dismiss(animated: true)
     }
+    
+    
+    //MARK: - Table View
     
 }

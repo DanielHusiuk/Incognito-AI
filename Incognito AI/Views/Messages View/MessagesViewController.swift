@@ -12,12 +12,20 @@ class MessagesViewController: UIViewController {
     let backgroundView: UIView! = .init(frame: .zero)
     let messagesTitle: UILabel! = .init(frame: .zero)
     let closeButton: UIButton! = .init(frame: .zero)
+    let fadeView: UIView! = .init(frame: .zero)
 
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundSetup()
+        fadeViewSetup()
+        
         titleSetup()
         closeButtonSetup()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        gradientSetup()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -26,6 +34,9 @@ class MessagesViewController: UIViewController {
             backgroundView.layer.borderColor = UIColor.systemGray5.cgColor
         }
     }
+    
+    
+    //MARK: - Background
     
     func backgroundSetup() {
         view.backgroundColor = .clear
@@ -44,6 +55,35 @@ class MessagesViewController: UIViewController {
             backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
+    
+    func fadeViewSetup() {
+        fadeView.translatesAutoresizingMaskIntoConstraints = false
+        fadeView.isUserInteractionEnabled = false
+        fadeView.backgroundColor = .systemBackground
+        
+        view.addSubview(fadeView)
+        NSLayoutConstraint.activate([
+            fadeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            fadeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            fadeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            fadeView.heightAnchor.constraint(equalTo: view.heightAnchor)
+        ])
+    }
+    
+    func gradientSetup() {
+        let gradient = CAGradientLayer()
+        gradient.frame = fadeView.bounds
+        
+        gradient.colors = [
+            UIColor.black.withAlphaComponent(0.0).cgColor,
+            UIColor.black.withAlphaComponent(1.0).cgColor
+        ]
+        gradient.locations = [0.0, 0.8]
+        fadeView.layer.mask = gradient
+    }
+    
+    
+    //MARK: - Navigation Bar
     
     func titleSetup() {        
         messagesTitle.translatesAutoresizingMaskIntoConstraints = false
@@ -69,7 +109,6 @@ class MessagesViewController: UIViewController {
         closeButton.layer.borderColor = #colorLiteral(red: 0.2567243651, green: 0.5657354798, blue: 0.4573884009, alpha: 1)
         closeButton.layer.borderWidth = 2
         closeButton.layer.cornerRadius = 27.5
-        closeButton.alpha = 0.9
         
         closeButton.addTarget(self, action: #selector(closeButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         closeButton.addTarget(self, action: #selector(closeButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
@@ -100,5 +139,8 @@ class MessagesViewController: UIViewController {
         })
         dismiss(animated: true)
     }
+    
+    
+    //MARK: - Table View
 
 }
