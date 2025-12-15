@@ -7,9 +7,11 @@
 
 import UIKit
 
-class MessagesCollectionView: UICollectionView, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
+    weak var externalScrollDelegate: UIScrollViewDelegate?
     let layout = UICollectionViewFlowLayout()
+    
     var messages: [ChatMessage] = [
         ChatMessage(role: "user", content: "user\nWhat is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
         ChatMessage(role: "system", content: "system\nWhat is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
@@ -47,6 +49,15 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDelegate, UIColl
         }
     }
     
+    override func didMoveToSuperview() {
+        super.didMoveToSuperview()
+        super.delegate = self
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        externalScrollDelegate?.scrollViewDidScroll?(scrollView)
+    }
+    
     
     //MARK: - Setup
     
@@ -55,15 +66,11 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDelegate, UIColl
         layout.scrollDirection = .vertical
         
         register(MessageCollectionViewCell.self, forCellWithReuseIdentifier: "MessageCell")
-        delegate = self
         dataSource = self
         
         indicatorStyle = .default
         backgroundColor = .clear
         contentMode = .scaleAspectFit
-        contentInset.top = 85
-        contentInset.bottom = 85
-        verticalScrollIndicatorInsets = .init(top: 80, left: 0, bottom: 80, right: 0)
         
         scrollsToTop = true
         alwaysBounceVertical = true
@@ -133,13 +140,11 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDelegate, UIColl
     
     func configureContextMenu(indexPath: IndexPath) -> UIContextMenuConfiguration {
         return UIContextMenuConfiguration(identifier: indexPath as NSCopying, previewProvider: nil) { _ in
-            let copy = UIAction(title: "Copy", image: UIImage(systemName: "document.on.document")) { _ in
+            let copy = UIAction(title: "Copy", image: UIImage(systemName: "doc.on.doc")) { _ in
                 UIPasteboard.general.string = self.messages[indexPath.section].content
             }
             return UIMenu(title: "", children: [copy])
         }
     }
-    
-    
     
 }

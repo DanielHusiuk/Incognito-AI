@@ -8,15 +8,13 @@
 import UIKit
 import SwiftUI
 
-class ViewController: UIViewController, UITextViewDelegate {
+class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDelegate {
     
     let topStackView: UIStackView = .init(frame: .zero)
     let spacer = UIView()
-    
     let labelStackView: UIStackView = .init(frame: .zero)
     let centerLabel = CenterLabel()
     let centerDetailLabelButton = MessagesButton()
-    
     let settingsButton = SettingsButton()
     let newChatButton = NewChatButton()
     
@@ -36,7 +34,6 @@ class ViewController: UIViewController, UITextViewDelegate {
     var fieldTextHeightConstraint: NSLayoutConstraint!
     var fieldTextStandardConstraint: [NSLayoutConstraint]!
     var fieldTextBigConstraint: [NSLayoutConstraint]!
-    
     let fieldPlaceholder: UILabel = .init(frame: .zero)
     var fieldPlaceholderCenterConstraint: NSLayoutConstraint!
     var fieldPlaceholderLeadingConstraint: NSLayoutConstraint!
@@ -44,11 +41,16 @@ class ViewController: UIViewController, UITextViewDelegate {
     let sendButton: UIButton = .init(frame: .zero)
     let eraseButton: UIButton = .init(frame: .zero)
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
+    let scrollDownButton = ScrollDownButton()
     
     let openAiApi = ApiManager()
     let messagesCollectionView = MessagesCollectionView()
     var messagesCollectionViewBottomConstraint: NSLayoutConstraint!
     private var topBlurHostingController: UIViewController?
+    
+    private var isUserAtBottom: Bool {
+        messagesCollectionView.isAtBottom
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -75,12 +77,18 @@ class ViewController: UIViewController, UITextViewDelegate {
         super.viewDidLayoutSubviews()
         DispatchQueue.main.async {
             self.loadShadows()
+            self.collectionViewLayout()
         }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         self.view.window?.windowScene?.screenshotService?.delegate = self
+        
+        DispatchQueue.main.async {
+            self.messagesCollectionView.layoutIfNeeded()
+            self.updateScrollDownButton()
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -93,6 +101,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         coordinator.animate(alongsideTransition: { _ in
             self.messagesCollectionView.collectionViewLayout.invalidateLayout()
             self.topBlurHostingController?.view.layoutIfNeeded()
+            self.messagesCollectionView.layoutSubviews()
         })
     }
     
@@ -132,6 +141,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         aiPickerStackSetup()
         addAiPickerViewData()
         dismissKeyboardButtonSetup()
+        scrollDownButtonSetup()
     }
     
     func loadNotifications() {
@@ -141,17 +151,28 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     func loadShadows() {
-        ShadowManager().applyShadow(to: settingsButton, opacity: 0.5, shadowRadius: 10, viewBounds: settingsButton.bounds.insetBy(dx: 15, dy: 15))
-        ShadowManager().applyShadow(to: newChatButton, opacity: 0.5, shadowRadius: 10, viewBounds: newChatButton.bounds.insetBy(dx: 15, dy: 15))
+        ShadowManager().applyShadow(to: settingsButton, opacity: 0.2, shadowRadius: 10, viewBounds: settingsButton.bounds.insetBy(dx: 10, dy: 10))
+        ShadowManager().applyShadow(to: newChatButton, opacity: 0.2, shadowRadius: 10, viewBounds: newChatButton.bounds.insetBy(dx: 10, dy: 10))
         ShadowManager().applyShadow(to: labelStackView, opacity: 0.1, shadowRadius: 10, viewBounds: labelStackView.bounds)
         
         ShadowManager().applyShadow(to: aiButton, opacity: 0.3, shadowRadius: 10, viewBounds: aiButton.bounds.insetBy(dx: 0, dy: 5))
         ShadowManager().applyShadow(to: fieldView, opacity: 0.3, shadowRadius: 10, viewBounds: fieldView.bounds.insetBy(dx: 0, dy: 5))
         ShadowManager().applyShadow(to: sendButton, opacity: 0.3, shadowRadius: 10, viewBounds: sendButton.bounds.insetBy(dx: 0, dy: 5))
+        
+        ShadowManager().applyShadow(to: dismissKeyboardButton, opacity: 0.1, shadowRadius: 10, viewBounds: sendButton.bounds.insetBy(dx: 0, dy: 5))
+        ShadowManager().applyShadow(to: scrollDownButton, opacity: 0.1, shadowRadius: 10, viewBounds: sendButton.bounds.insetBy(dx: 0, dy: 5))
+    }
+    
+    func collectionViewLayout() {
+        let topInset = newChatButton.frame.height + 25
+        let bottomInset = sendButton.frame.height + 25
+        messagesCollectionView.contentInset.top = topInset
+        messagesCollectionView.contentInset.bottom = bottomInset
+        messagesCollectionView.verticalScrollIndicatorInsets = .init(top: topInset, left: 0, bottom: bottomInset, right: 0)
     }
     
     
-    //MARK: - Preferences
+    //MARK: - Screen Orientation
     
     func checkScreenOrientation() {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
@@ -212,14 +233,31 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     func collectionViewSetup() {
         messagesCollectionViewBottomConstraint = messagesCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        messagesCollectionView.externalScrollDelegate = self
+        messagesCollectionView.delegate = self
         
         view.addSubview(messagesCollectionView)
         NSLayoutConstraint.activate([
             messagesCollectionView.topAnchor.constraint(equalTo: view.topAnchor),
-            messagesCollectionViewBottomConstraint,
             messagesCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            messagesCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+            messagesCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            messagesCollectionViewBottomConstraint!
         ])
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        updateScrollDownButton()
+        self.view.layoutIfNeeded()
+    }
+    
+    private func updateScrollDownButton() {
+        let shouldShow = !self.isUserAtBottom
+        
+        UIView.animate(withDuration: 0.2) {
+            self.scrollDownButton.alpha = shouldShow ? 1 : 0
+            self.scrollDownButton.transform = shouldShow ? .identity: CGAffineTransform(scaleX: 0.5, y: 0.5)
+            self.scrollDownButton.isUserInteractionEnabled = shouldShow
+        }
     }
     
     
@@ -227,7 +265,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     func topBlurEffectSetup() {
         let blurEffect = BlurView()
-            .blur(radius: 15)
+            .blur(radius: 20)
             .padding(.horizontal, -100)
             .padding(.top, -100)
             .colorScheme(.light)
@@ -249,7 +287,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     func bottomBlurEffectSetup() {
         let blurEffect = BlurView()
-            .blur(radius: 15)
+            .blur(radius: 20)
             .padding(.horizontal, -100)
             .padding(.bottom, -150)
             .colorScheme(.light)
@@ -264,7 +302,7 @@ class ViewController: UIViewController, UITextViewDelegate {
             hostingController.view.bottomAnchor.constraint(equalTo: bottomStackView.bottomAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: bottomStackView.leadingAnchor),
             hostingController.view.trailingAnchor.constraint(equalTo: bottomStackView.trailingAnchor),
-            hostingController.view.heightAnchor.constraint(equalTo: bottomStackView.heightAnchor, constant: 15)
+            hostingController.view.heightAnchor.constraint(equalTo: bottomStackView.heightAnchor, constant: 5)
         ])
     }
     
@@ -843,6 +881,8 @@ class ViewController: UIViewController, UITextViewDelegate {
         guard let text = fieldText.text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         openAiApi.userMessage = fieldText.text
         openAiApi.sendData()
+        messagesCollectionView.messages.append(ChatMessage(role: "user", content: fieldText.text))
+        messagesCollectionView.reloadData()
         
         AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
         fieldText.endEditing(true)
@@ -857,8 +897,25 @@ class ViewController: UIViewController, UITextViewDelegate {
             UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut, animations: {
                 self.fieldTextHeightConstraint.constant = 46
                 self.eraseButton.alpha = 0
+                
                 self.view.layoutIfNeeded()
                 self.loadShadows()
+            }, completion: { _ in
+                self.messagesCollectionView.layoutIfNeeded()
+                let contentHeight = self.messagesCollectionView.contentSize.height
+                let boundsHeight = self.messagesCollectionView.bounds.height
+                let insets = self.messagesCollectionView.adjustedContentInset
+                
+                let rawOffsetY = contentHeight + insets.bottom - boundsHeight
+                let minOffsetY = -insets.top
+                let finalOffsetY = max(rawOffsetY, minOffsetY)
+                
+                CATransaction.begin()
+                CATransaction.setCompletionBlock {
+                    self.updateScrollDownButton()
+                }
+                self.messagesCollectionView.setContentOffset(CGPoint(x: 0, y: finalOffsetY), animated: true)
+                CATransaction.commit()
             })
         }
         
@@ -866,6 +923,88 @@ class ViewController: UIViewController, UITextViewDelegate {
         if UserDefaults.standard.bool(forKey: "HapticState") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
+    }
+    
+    
+    //MARK: - Scroll Down Button
+    
+    func scrollDownButtonSetup() {
+        scrollDownButton.alpha = 0
+        scrollDownButton.isUserInteractionEnabled = false
+        view.addSubview(scrollDownButton)
+        
+        NSLayoutConstraint.activate([
+            scrollDownButton.centerXAnchor.constraint(equalTo: sendButton.centerXAnchor),
+            scrollDownButton.bottomAnchor.constraint(equalTo: sendButton.topAnchor, constant: -20),
+            scrollDownButton.heightAnchor.constraint(equalToConstant: 42),
+            scrollDownButton.widthAnchor.constraint(equalToConstant: 42)
+        ])
+        
+        scrollDownButton.addTarget(self, action: #selector(scrollDownButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
+        scrollDownButton.addTarget(self, action: #selector(scrollDownButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        scrollDownButton.addTarget(self, action: #selector(scrollDownButtonTouchUp), for: [.touchUpInside])
+    }
+    
+    @objc func scrollDownButtonTouchDown() {
+        scrollDownButton.tintColor = .pickedButtonGray
+        scrollDownButton.backgroundColor = .systemGray3
+    }
+    
+    @objc func scrollDownButtonCancel() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.scrollDownButton.tintColor = .systemGray2
+            self.scrollDownButton.backgroundColor = .systemGray6
+        })
+    }
+    
+    @objc func scrollDownButtonTouchUp() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.scrollDownButton.tintColor = .systemGray2
+            self.scrollDownButton.backgroundColor = .systemGray6
+        })
+        
+        DispatchQueue.main.async {
+            self.messagesCollectionView.layoutIfNeeded()
+            let contentHeight = self.messagesCollectionView.contentSize.height
+            let boundsHeight = self.messagesCollectionView.bounds.height
+            let insets = self.messagesCollectionView.adjustedContentInset
+            
+            let rawOffsetY = contentHeight + insets.bottom - boundsHeight
+            let minOffsetY = -insets.top
+            let finalOffsetY = max(rawOffsetY, minOffsetY)
+            
+            CATransaction.begin()
+            CATransaction.setCompletionBlock {
+                self.updateScrollDownButton()
+            }
+            self.messagesCollectionView.setContentOffset(CGPoint(x: 0, y: finalOffsetY), animated: true)
+            CATransaction.commit()
+        }
+    }
+    
+    @objc func scrollDownButtonKeyboardAnimation(notification: Notification) {
+        guard let userInfo = notification.userInfo else { return }
+        let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as! TimeInterval
+        let curveRaw = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as! UInt
+        let curve = UIView.AnimationOptions(rawValue: curveRaw << 16)
+        
+        self.messagesCollectionView.layoutIfNeeded()
+        let contentHeight = self.messagesCollectionView.contentSize.height
+        let boundsHeight = self.messagesCollectionView.bounds.height
+        let insets = self.messagesCollectionView.adjustedContentInset
+        
+        let rawOffsetY = contentHeight + insets.bottom - boundsHeight
+        let minOffsetY = -insets.top
+        let finalOffsetY = max(rawOffsetY, minOffsetY)
+        
+        CATransaction.begin()
+        CATransaction.setCompletionBlock {
+            self.updateScrollDownButton()
+        }
+        UIView.animate(withDuration: duration, delay: 0, options: [curve], animations: {
+            self.messagesCollectionView.setContentOffset(CGPoint(x: 0, y: finalOffsetY), animated: false)
+        })
+        CATransaction.commit()
     }
     
     
@@ -879,6 +1018,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         dismissKeyboardButton.backgroundColor = .systemGray6
         dismissKeyboardButton.layer.cornerRadius = 17.5
         dismissKeyboardButton.alpha = 0
+        dismissKeyboardButton.transform = .init(scaleX: 0.1, y: 0.1)
         
         dismissKeyboardButton.addTarget(self, action: #selector(dismissKeyboardDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         dismissKeyboardButton.addTarget(self, action: #selector(dismissKeyboardCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
@@ -887,25 +1027,28 @@ class ViewController: UIViewController, UITextViewDelegate {
         view.addSubview(dismissKeyboardButton)
         NSLayoutConstraint.activate([
             dismissKeyboardButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            dismissKeyboardButton.topAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -40),
+            dismissKeyboardButton.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -5),
             dismissKeyboardButton.heightAnchor.constraint(equalToConstant: 35),
             dismissKeyboardButton.widthAnchor.constraint(equalToConstant: 35)
         ])
     }
     
     @objc func dismissKeyboardDown(_ sender: UIButton) {
-        dismissKeyboardButton.tintColor = .systemGray
+        dismissKeyboardButton.tintColor = .pickedButtonGray
+        dismissKeyboardButton.backgroundColor = .systemGray3
     }
     
     @objc func dismissKeyboardCancel(_ sender: UIButton) {
         UIView.animate(withDuration: 0.1, animations: {
             self.dismissKeyboardButton.tintColor = .systemGray2
+            self.dismissKeyboardButton.backgroundColor = .systemGray6
         })
     }
     
     @objc func dismissKeyboardUp(_ sender: UIButton) {
         UIView.animate(withDuration: 0.1, animations: {
             self.dismissKeyboardButton.tintColor = .systemGray2
+            self.dismissKeyboardButton.backgroundColor = .systemGray6
         })
         
         UserDefaults.standard.set(false, forKey: "isEditing")
@@ -915,11 +1058,13 @@ class ViewController: UIViewController, UITextViewDelegate {
     @objc func checkDismissButton() {
         if fieldText.isEditing {
             UIView.animate(withDuration: 0.4, animations: {
+                self.dismissKeyboardButton.transform = .init(scaleX: 1, y: 1)
                 self.dismissKeyboardButton.alpha = 1
                 self.dismissKeyboardButton.isUserInteractionEnabled = true
             })
         } else {
             UIView.animate(withDuration: 0.35, animations: {
+                self.dismissKeyboardButton.transform = .init(scaleX: 0.1, y: 0.1)
                 self.dismissKeyboardButton.alpha = 0
                 self.dismissKeyboardButton.isUserInteractionEnabled = false
             })
@@ -927,26 +1072,42 @@ class ViewController: UIViewController, UITextViewDelegate {
     }
     
     @objc func keyboardWillShow(_ notification: Notification) {
-        if fieldText.isEditing {
-            moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, keyboardWillSHow: true)
-            moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, keyboardWillSHow: true)
-            DispatchQueue.main.async {
-                self.messagesCollectionView.contentInset.bottom = 110
-                self.messagesCollectionView.verticalScrollIndicatorInsets = .init(top: 80, left: 0, bottom: 110, right: 0)
+        guard fieldText.isEditing else { return }
+        let wasAtBottom = isUserAtBottom
+        let bottomInset = view.safeAreaInsets.bottom
+        
+        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, adjustedConstraintConstant: 10, standardConstraintConstant: -10, keyboardWillSHow: true)
+        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, adjustedConstraintConstant: bottomInset.self, standardConstraintConstant: 0, keyboardWillSHow: true)
+        
+        DispatchQueue.main.async {
+            self.messagesCollectionView.layoutIfNeeded()
+            self.updateScrollDownButton()
+            
+            if wasAtBottom {
+                self.scrollDownButtonKeyboardAnimation(notification: notification)
             }
         }
     }
     
     @objc func keyboardWillHide(_ notification: Notification) {
-        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, keyboardWillSHow: false)
-        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, keyboardWillSHow: false)
+        let wasAtBottom = isUserAtBottom
+        let bottomInset = view.safeAreaInsets.bottom
+        
+        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, adjustedConstraintConstant: 10, standardConstraintConstant: -10, keyboardWillSHow: false)
+        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, adjustedConstraintConstant: bottomInset.self, standardConstraintConstant: 0, keyboardWillSHow: false)
+        
         DispatchQueue.main.async {
-            self.messagesCollectionView.contentInset.bottom = 85
-            self.messagesCollectionView.verticalScrollIndicatorInsets = .init(top: 80, left: 0, bottom: 80, right: 0)
+            self.messagesCollectionView.layoutIfNeeded()
+            self.updateScrollDownButton()
+            self.view.layoutIfNeeded()
+            
+            if wasAtBottom {
+                self.scrollDownButtonKeyboardAnimation(notification: notification)
+            }
         }
     }
     
-    func moveViewWithKeyboard(notification: Notification, viewBottomConstraint: NSLayoutConstraint, keyboardWillSHow: Bool) {
+    func moveViewWithKeyboard(notification: Notification, viewBottomConstraint: NSLayoutConstraint, adjustedConstraintConstant: CGFloat, standardConstraintConstant: CGFloat, keyboardWillSHow: Bool) {
         guard let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
         let keyboardHeight = keyboardSize.height
         
@@ -955,9 +1116,9 @@ class ViewController: UIViewController, UITextViewDelegate {
         let safeAreaBottom = self.view?.window?.safeAreaInsets.bottom ?? 0
         
         if keyboardWillSHow {
-            viewBottomConstraint.constant = -(keyboardHeight - safeAreaBottom + 10)
+            viewBottomConstraint.constant = -(keyboardHeight - safeAreaBottom + adjustedConstraintConstant)
         } else {
-            viewBottomConstraint.constant = -10
+            viewBottomConstraint.constant = standardConstraintConstant
         }
         
         let animator = UIViewPropertyAnimator(duration: keyboardDuration, curve: keyboardCurve) {
@@ -978,6 +1139,15 @@ extension UITextView {
     }
 }
 
+extension UIScrollView {
+    var isAtBottom: Bool {
+        let contentOffsetY = contentOffset.y
+        let visibleHeight = bounds.height
+        let contentHeight = contentSize.height
+        return contentOffsetY + visibleHeight >= contentHeight + 50
+    }
+}
+
 extension ViewController: UIScreenshotServiceDelegate {
     
     func screenshotService(_ screenshotService: UIScreenshotService, generatePDFRepresentationWithCompletion completionHandler: @escaping (Data?, Int, CGRect) -> Void) {
@@ -988,7 +1158,6 @@ extension ViewController: UIScreenshotServiceDelegate {
             let originalFrame = self.messagesCollectionView.frame
             
             let contentSize = self.messagesCollectionView.collectionViewLayout.collectionViewContentSize
-            
             let visibleHeight = self.messagesCollectionView.bounds.height
             UIGraphicsBeginPDFContextToData(pdfData, CGRect(origin: .zero, size: contentSize), nil)
             
@@ -1027,4 +1196,3 @@ extension ViewController: UIScreenshotServiceDelegate {
         }
     }
 }
-

@@ -1,14 +1,14 @@
 //
-//  AiButton.swift
+//  ScrollDown.swift
 //  Incognito AI
 //
-//  Created by Daniel Husiuk on 16.09.2025.
+//  Created by Daniel Husiuk on 28.11.2025.
 //
 
 import UIKit
 
-class AiButton: UIButton {
-
+class ScrollDownButton: UIButton {
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         buttonSetup()
@@ -22,14 +22,11 @@ class AiButton: UIButton {
     func buttonSetup() {
         translatesAutoresizingMaskIntoConstraints = false
         imageView?.contentMode = .scaleAspectFit
-        setImage(UIImage(systemName: "sparkle"), for: .normal)
-        setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(weight: .bold), forImageIn: .normal)
+        setImage(UIImage(systemName: "chevron.down"), for: .normal)
+        setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(weight: .semibold), forImageIn: .normal)
         tintColor = .systemGray2
         backgroundColor = .systemGray6
-        layer.borderColor = UIColor.systemGray5.cgColor
-        layer.borderWidth = 2
-        layer.cornerRadius = 25
-        transform = CGAffineTransform(rotationAngle: .pi * 2)
+        layer.cornerRadius = 21
     }
-
+    
 }

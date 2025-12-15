@@ -121,7 +121,7 @@ class SettingsViewController: UIViewController {
         view.addSubview(closeSettingsButton)
         NSLayoutConstraint.activate([
             closeSettingsButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 15),
-            closeSettingsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
+            closeSettingsButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 15),
             closeSettingsButton.widthAnchor.constraint(equalToConstant: 30),
             closeSettingsButton.heightAnchor.constraint(equalToConstant: 30)
         ])
@@ -147,7 +147,7 @@ class SettingsViewController: UIViewController {
     
     func resetSettingsButtonSetup() {
         resetSettingsButton.translatesAutoresizingMaskIntoConstraints = false
-        resetSettingsButton.setImage(UIImage(systemName: "exclamationmark.arrow.trianglehead.counterclockwise.rotate.90"), for: .normal)
+        resetSettingsButton.setImage(UIImage(systemName: "exclamationmark.arrow.triangle.2.circlepath"), for: .normal)
         resetSettingsButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(weight: .semibold), forImageIn: .normal)
         resetSettingsButton.tintColor = .systemGray
         resetSettingsButton.backgroundColor = .secondarySystemBackground
@@ -160,7 +160,7 @@ class SettingsViewController: UIViewController {
         view.addSubview(resetSettingsButton)
         NSLayoutConstraint.activate([
             resetSettingsButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 15),
-            resetSettingsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
+            resetSettingsButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -15),
             resetSettingsButton.widthAnchor.constraint(equalToConstant: 30),
             resetSettingsButton.heightAnchor.constraint(equalToConstant: 30)
         ])
