@@ -49,7 +49,8 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     private var topBlurHostingController: UIViewController?
     
     private var isUserAtBottom: Bool {
-        messagesCollectionView.isAtBottom
+        let dynamicAppearingValue = fieldTextHeightConstraint.constant + 5
+        return messagesCollectionView.isAtBottom(appearingValue: dynamicAppearingValue)
     }
     
     override func viewDidLoad() {
@@ -61,6 +62,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         loadTopView()
         loadBottomView()
         loadNotifications()
+        
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -77,13 +79,13 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         super.viewDidLayoutSubviews()
         DispatchQueue.main.async {
             self.loadShadows()
-            self.collectionViewLayout()
         }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         self.view.window?.windowScene?.screenshotService?.delegate = self
+        collectionViewLayout()
         
         DispatchQueue.main.async {
             self.messagesCollectionView.layoutIfNeeded()
@@ -235,6 +237,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         messagesCollectionViewBottomConstraint = messagesCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         messagesCollectionView.externalScrollDelegate = self
         messagesCollectionView.delegate = self
+        messagesCollectionView.keyboardDismissMode = .interactive
         
         view.addSubview(messagesCollectionView)
         NSLayoutConstraint.activate([
@@ -519,9 +522,37 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             }
         }
         
+        let wasAtBottom = self.isUserAtBottom
+        let newBottomInset = fieldTextHeightConstraint.constant + 29
+        
         UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseInOut, animations: {
+            self.messagesCollectionView.contentInset.bottom = newBottomInset
+            self.messagesCollectionView.verticalScrollIndicatorInsets.bottom = newBottomInset
             self.view.layoutIfNeeded()
             self.loadShadows()
+            
+            if wasAtBottom {
+                DispatchQueue.main.async {
+                    self.messagesCollectionView.layoutIfNeeded()
+                    let contentHeight = self.messagesCollectionView.contentSize.height
+                    let boundsHeight = self.messagesCollectionView.bounds.height
+                    let insets = self.messagesCollectionView.adjustedContentInset
+                    
+                    let rawOffsetY = contentHeight + insets.bottom - boundsHeight
+                    let minOffsetY = -insets.top
+                    let finalOffsetY = max(rawOffsetY, minOffsetY)
+                    
+                    
+                    CATransaction.begin()
+                    CATransaction.setCompletionBlock {
+                        self.updateScrollDownButton()
+                    }
+                    UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseInOut, animations: {
+                        self.messagesCollectionView.setContentOffset(CGPoint(x: 0, y: finalOffsetY), animated: false)
+                    })
+                    CATransaction.commit()
+                }
+            }
         })
     }
     
@@ -621,6 +652,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             self.eraseButton.alpha = 0
             self.view.layoutIfNeeded()
             self.loadShadows()
+            self.collectionViewLayout()
         })
         AnimationManager().animateLabelWithBottomSlide(view: fieldPlaceholder, duration: 0.15)
         
@@ -897,9 +929,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut, animations: {
                 self.fieldTextHeightConstraint.constant = 46
                 self.eraseButton.alpha = 0
-                
                 self.view.layoutIfNeeded()
                 self.loadShadows()
+                self.collectionViewLayout()
             }, completion: { _ in
                 self.messagesCollectionView.layoutIfNeeded()
                 let contentHeight = self.messagesCollectionView.contentSize.height
@@ -1140,11 +1172,11 @@ extension UITextView {
 }
 
 extension UIScrollView {
-    var isAtBottom: Bool {
+    func isAtBottom(appearingValue: CGFloat = 50) -> Bool {
         let contentOffsetY = contentOffset.y
         let visibleHeight = bounds.height
         let contentHeight = contentSize.height
-        return contentOffsetY + visibleHeight >= contentHeight + 50
+        return contentOffsetY + visibleHeight >= contentHeight + appearingValue
     }
 }
 
