@@ -102,7 +102,7 @@ class SettingsTableCell: UITableViewCell {
         customCellView.addSubview(titleLabel)
         titleLabelLeadingConstraint = titleLabel.leadingAnchor.constraint(equalTo: customCellView.leadingAnchor, constant: 50)
         titleLabelCenterConstraint = titleLabel.centerXAnchor.constraint(equalTo: customCellView.centerXAnchor)
-                
+        
         NSLayoutConstraint.activate([
             titleLabelLeadingConstraint,
             titleLabel.centerYAnchor.constraint(equalTo: customCellView.centerYAnchor)
@@ -156,9 +156,7 @@ class SettingsTableCell: UITableViewCell {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
-        UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseInOut, animations: {
-            self.customCellView.backgroundColor = .cellBackground
-        })
+        customCellView.backgroundColor = .cellBackground
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {

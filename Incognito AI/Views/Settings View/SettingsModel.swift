@@ -21,7 +21,7 @@ struct SettingsModel {
     var cells: [SettingsCell] = [
         
         SettingsCell(id: 0, titleImage: UIImage(systemName: "keyboard.badge.eye")!, title: "Show keyboard on launch", header: "Keyboard:", footer: "", cells:
-                        [SettingsCell(id: 1, titleImage: UIImage(systemName: "keyboard.chevron.compact.down")!, title: "Disable 'Hide Keyboard' button", header: "", footer: "", cells: [])
+                        [SettingsCell(id: 1, titleImage: UIImage(systemName: "keyboard.chevron.compact.down")!, title: "Enable \"Hide Keyboard\" button", header: "", footer: "", cells: [])
                         ]),
         
         SettingsCell(id: 2, titleImage: UIImage(systemName: "plus.circle")!, title: "Confirm new chat", header: "Productivity:", footer: "", cells: [

@@ -16,6 +16,9 @@ class SettingsViewController: UIViewController {
     let navigationView: UIView! = .init(frame: .zero)
     let navigationGradientView: UIView! = .init(frame: .zero)
     
+    let bottomView: UIView! = .init(frame: .zero)
+    let bottomGradientView: UIView! = .init(frame: .zero)
+    
     let settingsTitle: UILabel! = .init(frame: .zero)
     let closeSettingsButton: UIButton! = .init(frame: .zero)
     let resetSettingsButton: UIButton! = .init(frame: .zero)
@@ -31,6 +34,9 @@ class SettingsViewController: UIViewController {
         navigationViewSetup()
         navigationGradientViewSetup()
         
+        bottomViewSetup()
+        bottomGradientViewSetup()
+        
         titleSetup()
         closeSettingsButtonSetup()
         resetSettingsButtonSetup()
@@ -40,6 +46,7 @@ class SettingsViewController: UIViewController {
         super.viewDidLayoutSubviews()
         backgroundGradientSetup()
         navigationGradientSetup()
+        bottomGradientSetup()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -100,6 +107,45 @@ class SettingsViewController: UIViewController {
         ]
         gradientMask.locations = [0.0, 0.8]
         backgroundGradientView.layer.mask = gradientMask
+    }
+    
+    func bottomViewSetup() {
+        bottomView.translatesAutoresizingMaskIntoConstraints = false
+        bottomView.backgroundColor = .clear
+        view.addSubview(bottomView)
+        
+        NSLayoutConstraint.activate([
+            bottomView.heightAnchor.constraint(equalToConstant: 32),
+            bottomView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bottomView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 2),
+            bottomView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -2)
+        ])
+    }
+    
+    func bottomGradientViewSetup() {
+        bottomGradientView.translatesAutoresizingMaskIntoConstraints = false
+        bottomGradientView.isUserInteractionEnabled = false
+        bottomGradientView.backgroundColor = .systemGroupedBackground
+        
+        view.addSubview(bottomGradientView)
+        NSLayoutConstraint.activate([
+            bottomGradientView.leadingAnchor.constraint(equalTo: bottomView.leadingAnchor),
+            bottomGradientView.trailingAnchor.constraint(equalTo: bottomView.trailingAnchor),
+            bottomGradientView.bottomAnchor.constraint(equalTo: bottomView.bottomAnchor),
+            bottomGradientView.heightAnchor.constraint(equalTo: bottomView.heightAnchor)
+        ])
+    }
+    
+    func bottomGradientSetup() {
+        let gradientMask = CAGradientLayer()
+        gradientMask.frame = bottomGradientView.bounds
+        
+        gradientMask.colors = [
+            UIColor.black.withAlphaComponent(0.0).cgColor,
+            UIColor.black.withAlphaComponent(1.0).cgColor
+        ]
+        gradientMask.locations = [0.0, 1.0]
+        bottomGradientView.layer.mask = gradientMask
     }
     
     

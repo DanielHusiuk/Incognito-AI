@@ -45,12 +45,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     let openAiApi = ApiManager()
     let messagesCollectionView = MessagesCollectionView()
-    var messagesCollectionViewBottomConstraint: NSLayoutConstraint!
     private var topBlurHostingController: UIViewController?
     
     private var isUserAtBottom: Bool {
-        let dynamicAppearingValue = fieldTextHeightConstraint.constant + 5
-        return messagesCollectionView.isAtBottom(appearingValue: dynamicAppearingValue)
+        return messagesCollectionView.isRoughlyAtBottom(tolerance: fieldTextHeightConstraint.constant + 5)
     }
     
     override func viewDidLoad() {
@@ -62,7 +60,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         loadTopView()
         loadBottomView()
         loadNotifications()
-        
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -79,6 +76,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         super.viewDidLayoutSubviews()
         DispatchQueue.main.async {
             self.loadShadows()
+            self.keyboardSwipeDownAnimation()
         }
     }
     
@@ -148,8 +146,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     func loadNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(self.handleButtonTap), name: Notification.Name("pickerButtonTapped"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
     
     func loadShadows() {
@@ -167,10 +164,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     func collectionViewLayout() {
         let topInset = newChatButton.frame.height + 25
-        let bottomInset = sendButton.frame.height + 25
         messagesCollectionView.contentInset.top = topInset
-        messagesCollectionView.contentInset.bottom = bottomInset
-        messagesCollectionView.verticalScrollIndicatorInsets = .init(top: topInset, left: 0, bottom: bottomInset, right: 0)
+        messagesCollectionView.verticalScrollIndicatorInsets.top = topInset
+        messagesCollectionViewInsets()
     }
     
     
@@ -181,7 +177,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             let orientation = windowScene.interfaceOrientation
             if orientation.isPortrait {
                 resizeTextView(fieldText)
-                fieldText.endEditing(true)
                 guard topStackView.alpha == 0 else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
                     UIView.animate(withDuration: 0.2, animations: {
@@ -189,13 +184,12 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                         self.settingsButton.alpha = 1
                         self.newChatButton.alpha = 1
                         self.topBlurHostingController?.view.alpha = 1
-                        if UserDefaults.standard.bool(forKey: "isEditing") { self.fieldText.becomeFirstResponder() }
-                        print(UserDefaults.standard.bool(forKey: "isEditing"))
+                        self.collectionViewLayout()
+                        self.messagesCollectionView.layoutIfNeeded()
                     })
                 })
             } else {
                 resizeTextView(fieldText)
-                fieldText.endEditing(true)
                 guard topStackView.alpha == 1 else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
                     UIView.animate(withDuration: 0.2, animations: {
@@ -203,8 +197,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                         self.settingsButton.alpha = 0
                         self.newChatButton.alpha = 0
                         self.topBlurHostingController?.view.alpha = 0
-                        if UserDefaults.standard.bool(forKey: "isEditing") { self.fieldText.becomeFirstResponder() }
-                        print(UserDefaults.standard.bool(forKey: "isEditing"))
+                        self.messagesCollectionView.contentInset.top = 0
+                        self.messagesCollectionView.verticalScrollIndicatorInsets.top = 0
+                        self.messagesCollectionView.layoutIfNeeded()
                     })
                 })
             }
@@ -234,7 +229,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     //MARK: - Messages UI
     
     func collectionViewSetup() {
-        messagesCollectionViewBottomConstraint = messagesCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         messagesCollectionView.externalScrollDelegate = self
         messagesCollectionView.delegate = self
         messagesCollectionView.keyboardDismissMode = .interactive
@@ -242,9 +236,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         view.addSubview(messagesCollectionView)
         NSLayoutConstraint.activate([
             messagesCollectionView.topAnchor.constraint(equalTo: view.topAnchor),
+            messagesCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             messagesCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             messagesCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            messagesCollectionViewBottomConstraint!
         ])
     }
     
@@ -254,13 +248,26 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     private func updateScrollDownButton() {
-        let shouldShow = !self.isUserAtBottom
+        let isVisuallyBottom = messagesCollectionView.isVisuallyAtBottom(tolerance: 30)
+        let shouldShow = !isVisuallyBottom
         
         UIView.animate(withDuration: 0.2) {
             self.scrollDownButton.alpha = shouldShow ? 1 : 0
             self.scrollDownButton.transform = shouldShow ? .identity: CGAffineTransform(scaleX: 0.5, y: 0.5)
             self.scrollDownButton.isUserInteractionEnabled = shouldShow
         }
+    }
+    
+    func messagesCollectionViewInsets() {
+        view.layoutIfNeeded()
+        let fullObstructionHeight = view.bounds.height - bottomStackView.frame.minY
+        let hasBottomSafeArea = view.safeAreaInsets.bottom > 0
+        
+        let visualCorrection: CGFloat = hasBottomSafeArea ? 20 : -10
+        let finalInset = fullObstructionHeight - visualCorrection
+        
+        messagesCollectionView.contentInset.bottom = finalInset
+        messagesCollectionView.verticalScrollIndicatorInsets.bottom = finalInset
     }
     
     
@@ -406,7 +413,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         bottomStackView.distribution = .fill
         bottomStackView.alignment = .bottom
         bottomStackView.spacing = 10
-        bottomStackBottomConstraint = bottomStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
+        bottomStackBottomConstraint = bottomStackView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -10)
         
         view.addSubview(bottomStackView)
         NSLayoutConstraint.activate([
@@ -496,6 +503,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         }
         
         UIView.animate(withDuration: 0.2, animations: {
+            self.fieldPlaceholder.transform = .identity
             self.fieldPlaceholderLeadingConstraint.isActive = false
             self.fieldPlaceholderCenterConstraint.isActive = true
             self.view.layoutIfNeeded()
@@ -507,28 +515,26 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     func resizeTextView(_ textView: UITextView) {
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            let orientation = windowScene.interfaceOrientation
-            
-            if orientation.isLandscape {
-                fieldTextHeightConstraint.constant = 46
-                textView.isScrollEnabled = true
-            } else if orientation.isPortrait {
-                textView.isScrollEnabled = false
-                let newSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.greatestFiniteMagnitude))
-                let maxHeight: CGFloat = 110
-                fieldTextHeightConstraint.constant = min(newSize.height, maxHeight)
-                textView.isScrollEnabled = newSize.height >= maxHeight
-            }
-        }
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        let orientation = windowScene.interfaceOrientation
         
+        if orientation.isLandscape {
+            fieldTextHeightConstraint.constant = 46
+            textView.isScrollEnabled = true
+        } else {
+            textView.isScrollEnabled = false
+            let targetSize = CGSize(width: textView.bounds.width, height: .greatestFiniteMagnitude)
+            let fittingHeight = textView.sizeThatFits(targetSize).height
+            let maxHeight: CGFloat = 110
+            
+            fieldTextHeightConstraint.constant = min(fittingHeight, maxHeight)
+            textView.isScrollEnabled = fittingHeight > maxHeight
+        }
         let wasAtBottom = self.isUserAtBottom
-        let newBottomInset = fieldTextHeightConstraint.constant + 29
         
         UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseInOut, animations: {
-            self.messagesCollectionView.contentInset.bottom = newBottomInset
-            self.messagesCollectionView.verticalScrollIndicatorInsets.bottom = newBottomInset
             self.view.layoutIfNeeded()
+            self.messagesCollectionViewInsets()
             self.loadShadows()
             
             if wasAtBottom {
@@ -541,7 +547,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                     let rawOffsetY = contentHeight + insets.bottom - boundsHeight
                     let minOffsetY = -insets.top
                     let finalOffsetY = max(rawOffsetY, minOffsetY)
-                    
                     
                     CATransaction.begin()
                     CATransaction.setCompletionBlock {
@@ -651,8 +656,8 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             self.fieldTextHeightConstraint.constant = 46
             self.eraseButton.alpha = 0
             self.view.layoutIfNeeded()
-            self.loadShadows()
             self.collectionViewLayout()
+            self.loadShadows()
         })
         AnimationManager().animateLabelWithBottomSlide(view: fieldPlaceholder, duration: 0.15)
         
@@ -1059,7 +1064,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         view.addSubview(dismissKeyboardButton)
         NSLayoutConstraint.activate([
             dismissKeyboardButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            dismissKeyboardButton.bottomAnchor.constraint(equalTo: bottomStackView.topAnchor, constant: -5),
+            dismissKeyboardButton.bottomAnchor.constraint(equalTo: fieldView.topAnchor, constant: -5),
             dismissKeyboardButton.heightAnchor.constraint(equalToConstant: 35),
             dismissKeyboardButton.widthAnchor.constraint(equalToConstant: 35)
         ])
@@ -1103,61 +1108,47 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         }
     }
     
-    @objc func keyboardWillShow(_ notification: Notification) {
+    @objc func keyboardWillChangeFrame(_ notification: Notification) {
+        messagesCollectionViewInsets()
+        
+        if isUserAtBottom {
+            scrollDownButtonKeyboardAnimation(notification: notification)
+        }
+    }
+    
+    func keyboardSwipeDownAnimation() {
         guard fieldText.isEditing else { return }
-        let wasAtBottom = isUserAtBottom
-        let bottomInset = view.safeAreaInsets.bottom
+        messagesCollectionViewInsets()
         
-        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, adjustedConstraintConstant: 10, standardConstraintConstant: -10, keyboardWillSHow: true)
-        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, adjustedConstraintConstant: bottomInset.self, standardConstraintConstant: 0, keyboardWillSHow: true)
-        
-        DispatchQueue.main.async {
-            self.messagesCollectionView.layoutIfNeeded()
-            self.updateScrollDownButton()
-            
-            if wasAtBottom {
-                self.scrollDownButtonKeyboardAnimation(notification: notification)
+        var heightValue: CGFloat = 250
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            let orientation = windowScene.interfaceOrientation
+            if orientation.isPortrait {
+                heightValue = 250
+            } else {
+                heightValue = 150
             }
         }
-    }
-    
-    @objc func keyboardWillHide(_ notification: Notification) {
-        let wasAtBottom = isUserAtBottom
-        let bottomInset = view.safeAreaInsets.bottom
         
-        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.bottomStackBottomConstraint, adjustedConstraintConstant: 10, standardConstraintConstant: -10, keyboardWillSHow: false)
-        moveViewWithKeyboard(notification: notification, viewBottomConstraint: self.messagesCollectionViewBottomConstraint, adjustedConstraintConstant: bottomInset.self, standardConstraintConstant: 0, keyboardWillSHow: false)
+        let safeAreaBottom = view.safeAreaInsets.bottom
+        let keyboardHeight = view.keyboardLayoutGuide.layoutFrame.height
+        let activeHeight = max(0, keyboardHeight - safeAreaBottom)
+        let progress = min(1, activeHeight / heightValue)
         
-        DispatchQueue.main.async {
-            self.messagesCollectionView.layoutIfNeeded()
-            self.updateScrollDownButton()
-            self.view.layoutIfNeeded()
-            
-            if wasAtBottom {
-                self.scrollDownButtonKeyboardAnimation(notification: notification)
-            }
-        }
-    }
-    
-    func moveViewWithKeyboard(notification: Notification, viewBottomConstraint: NSLayoutConstraint, adjustedConstraintConstant: CGFloat, standardConstraintConstant: CGFloat, keyboardWillSHow: Bool) {
-        guard let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
-        let keyboardHeight = keyboardSize.height
+        dismissKeyboardButton.alpha = progress
+        let scale = 0.5 + (0.5 * progress)
+        dismissKeyboardButton.transform = CGAffineTransform(scaleX: scale, y: scale)
+        dismissKeyboardButton.isUserInteractionEnabled = progress > 0.1
         
-        guard let keyboardDuration = notification.userInfo![UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else { return }
-        let keyboardCurve = UIView.AnimationCurve(rawValue: notification.userInfo![UIResponder.keyboardAnimationCurveUserInfoKey] as! Int)!
-        let safeAreaBottom = self.view?.window?.safeAreaInsets.bottom ?? 0
-        
-        if keyboardWillSHow {
-            viewBottomConstraint.constant = -(keyboardHeight - safeAreaBottom + adjustedConstraintConstant)
+        if fieldText.text.isEmpty {
+            let fieldCenter = fieldView.bounds.width / 2
+            let currentLabelCenter = fieldPlaceholder.center.x
+            let distanceToCenter = fieldCenter - currentLabelCenter
+            let xOffset = distanceToCenter * (1 - progress)
+            fieldPlaceholder.transform = CGAffineTransform(translationX: xOffset, y: 0)
         } else {
-            viewBottomConstraint.constant = standardConstraintConstant
+            fieldPlaceholder.transform = .identity
         }
-        
-        let animator = UIViewPropertyAnimator(duration: keyboardDuration, curve: keyboardCurve) {
-            self.view.layoutIfNeeded()
-        }
-        
-        animator.startAnimation()
     }
     
 }
@@ -1172,11 +1163,13 @@ extension UITextView {
 }
 
 extension UIScrollView {
-    func isAtBottom(appearingValue: CGFloat = 50) -> Bool {
-        let contentOffsetY = contentOffset.y
-        let visibleHeight = bounds.height
-        let contentHeight = contentSize.height
-        return contentOffsetY + visibleHeight >= contentHeight + appearingValue
+    func isRoughlyAtBottom(tolerance: CGFloat = 30) -> Bool {
+        return contentOffset.y + bounds.height >= contentSize.height - tolerance
+    }
+    
+    func isVisuallyAtBottom(tolerance: CGFloat = 30) -> Bool {
+        let visibleBottomY = contentOffset.y + bounds.height - adjustedContentInset.bottom
+        return visibleBottomY >= contentSize.height - tolerance
     }
 }
 

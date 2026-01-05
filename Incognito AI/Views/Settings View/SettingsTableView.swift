@@ -50,7 +50,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         indicatorStyle = .default
         backgroundColor = .clear
         contentMode = .scaleAspectFit
-        separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        separatorInset = UIEdgeInsets(top: 0, left: 18, bottom: 0, right: 18)
         
         scrollsToTop = true
         alwaysBounceVertical = true
@@ -79,23 +79,23 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         return tableViewCellHeight
     }
     
-    //    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-    //        let sectionModel = tableViewModel.cells[section]
-    //        if sectionModel.header != "" {
-    //            return 30
-    //        } else {
-    //            return 20
-    //        }
-    //    }
-    //
-    //    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-    //        let sectionModel = tableViewModel.cells[section]
-    //        if sectionModel.footer != "" {
-    //            return 30
-    //        } else {
-    //            return 20
-    //        }
-    //    }
+        func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+            let sectionModel = tableViewModel.cells[section]
+            if sectionModel.header != "" {
+                return 40
+            } else {
+                return 20
+            }
+        }
+    
+        func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+            let sectionModel = tableViewModel.cells[section]
+            if sectionModel.footer != "" {
+                return 40
+            } else {
+                return 20
+            }
+        }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard let headerText = tableViewModel.cells[section].header else { return nil }
@@ -168,7 +168,6 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         NSLayoutConstraint.activate([
             headerText.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 18),
             headerText.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -18),
-            headerText.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 14),
             headerText.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -4)
         ])
         return headerView
@@ -194,8 +193,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         NSLayoutConstraint.activate([
             footerText.leadingAnchor.constraint(equalTo: footerView.leadingAnchor, constant: 18),
             footerText.trailingAnchor.constraint(equalTo: footerView.trailingAnchor, constant: -18),
-            footerText.topAnchor.constraint(equalTo: footerView.topAnchor, constant: 4),
-            footerText.bottomAnchor.constraint(equalTo: footerView.bottomAnchor, constant: -4)
+            footerText.topAnchor.constraint(equalTo: footerView.topAnchor, constant: 4)
         ])
         return footerView
     }
