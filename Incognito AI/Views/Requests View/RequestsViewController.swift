@@ -1,5 +1,5 @@
 //
-//  MessagesViewController.swift
+//  RequestsViewController.swift
 //  Incognito AI
 //
 //  Created by Daniel Husiuk on 12.09.2025.
@@ -7,10 +7,10 @@
 
 import UIKit
 
-class MessagesViewController: UIViewController {
+class RequestsViewController: UIViewController {
     
     let backgroundView: UIView! = .init(frame: .zero)
-    let messagesTitle: UILabel! = .init(frame: .zero)
+    let requestsTitle: UILabel! = .init(frame: .zero)
     let closeButton: UIButton! = .init(frame: .zero)
     let fadeView: UIView! = .init(frame: .zero)
 
@@ -92,16 +92,16 @@ class MessagesViewController: UIViewController {
     //MARK: - Navigation Bar
     
     func titleSetup() {        
-        messagesTitle.translatesAutoresizingMaskIntoConstraints = false
-        messagesTitle.text = "What is messages?"
-        messagesTitle.textColor = .label
-        messagesTitle.textAlignment = .center
-        messagesTitle.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        view.addSubview(messagesTitle)
+        requestsTitle.translatesAutoresizingMaskIntoConstraints = false
+        requestsTitle.text = "What is request limit?"
+        requestsTitle.textColor = .label
+        requestsTitle.textAlignment = .center
+        requestsTitle.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        view.addSubview(requestsTitle)
         
         NSLayoutConstraint.activate([
-            messagesTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
-            messagesTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            requestsTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
+            requestsTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
     

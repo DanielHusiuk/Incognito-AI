@@ -34,6 +34,8 @@ class ApiManager {
     
     let url = URL(string: "https://models.github.ai/inference/chat/completions")
     var token: String = ""
+    let modelString = UserDefaults.standard.string(forKey: "buttonModel") ?? "error"
+    let messagesCollectionView = MessagesCollectionView()
     
     var userMessage: String = ""
     var finalResponse: String? = ""
@@ -42,7 +44,7 @@ class ApiManager {
     func sendData() {
         if !userMessage.isEmpty {
             requestBody = ChatRequest(
-                model: "openai/gpt-4.1-mini",
+                model: modelString,
                 messages: [
                     ChatMessage(role: "system", content: "You are a helpful assistant in Incognito AI app."),
                     ChatMessage(role: "user", content: userMessage),

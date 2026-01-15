@@ -14,7 +14,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     let spacer = UIView()
     let labelStackView: UIStackView = .init(frame: .zero)
     let centerLabel = CenterLabel()
-    let centerDetailLabelButton = MessagesButton()
+    let centerDetailLabelButton = RequestsButton()
     let settingsButton = SettingsButton()
     let newChatButton = NewChatButton()
     
@@ -312,7 +312,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             hostingController.view.bottomAnchor.constraint(equalTo: bottomStackView.bottomAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: bottomStackView.leadingAnchor),
             hostingController.view.trailingAnchor.constraint(equalTo: bottomStackView.trailingAnchor),
-            hostingController.view.heightAnchor.constraint(equalTo: bottomStackView.heightAnchor, constant: 5)
+            hostingController.view.heightAnchor.constraint(equalTo: bottomStackView.heightAnchor)
         ])
     }
     
@@ -395,6 +395,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     //MARK: - New Chat Button
     
     func newChatButtonSetup() {
+        newChatButton.addTarget(self, action: #selector(newChatButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
+        newChatButton.addTarget(self, action: #selector(newChatButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
+        newChatButton.addTarget(self, action: #selector(newChatButtonTouchUp), for: [.touchUpInside])
+        
         topStackView.addSubview(newChatButton)
         NSLayoutConstraint.activate([
             newChatButton.trailingAnchor.constraint(equalTo: topStackView.trailingAnchor, constant: -10),
@@ -402,6 +406,32 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             newChatButton.heightAnchor.constraint(equalToConstant: 50),
             newChatButton.widthAnchor.constraint(equalToConstant: 50)
         ])
+    }
+    
+    @objc func newChatButtonTouchDown() {
+        newChatButton.isHighlighted = true
+    }
+    
+    @objc func newChatButtonCancel() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.newChatButton.isHighlighted = false
+        })
+    }
+    
+    @objc func newChatButtonTouchUp() {
+        UIView.animate(withDuration: 0.1, animations: {
+            self.newChatButton.isHighlighted = false
+        })
+        
+        messagesCollectionView.performBatchUpdates({
+            let sections = IndexSet(integersIn: 0..<self.messagesCollectionView.messages.count)
+            messagesCollectionView.messages.removeAll()
+            messagesCollectionView.deleteSections(sections)
+        })
+        
+        if UserDefaults.standard.bool(forKey: "HapticState") {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
     }
     
     
@@ -844,6 +874,12 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         aiPickerContainer.isUserInteractionEnabled = false
         aiPickerShadowView.isUserInteractionEnabled = false
         
+        messagesCollectionView.performBatchUpdates({
+            let sections = IndexSet(integersIn: 0..<self.messagesCollectionView.messages.count)
+            messagesCollectionView.messages.removeAll()
+            messagesCollectionView.deleteSections(sections)
+        })
+        
         //center label
         AnimationManager().animateLabelWithBottomSlide(view: self.centerLabel, duration: 0.15)
         AnimationManager().animateLabelWithBottomSlide(view: self.centerDetailLabelButton, duration: 0.15)
@@ -851,7 +887,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             ShadowManager().applyShadow(to: self.labelStackView, opacity: 0, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
         }, completion: { _ in
             self.centerLabel.text = button.title
-            //self.centerDetailLabelButton.titleLabel?.text = messages count
+            self.centerDetailLabelButton.refresh()
             UIView.animate(withDuration: 0.1, delay: 0.1, options: .curveLinear, animations: {
                 ShadowManager().applyShadow(to: self.labelStackView, opacity: 0.1, shadowRadius: 10, viewBounds: self.labelStackView.bounds)
             })
@@ -916,14 +952,41 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         })
         
         guard let text = fieldText.text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        openAiApi.userMessage = fieldText.text
-        openAiApi.sendData()
-        messagesCollectionView.messages.append(ChatMessage(role: "user", content: fieldText.text))
-        messagesCollectionView.reloadData()
         
-        AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
-        fieldText.endEditing(true)
-        UserDefaults.standard.set(false, forKey: "isEditing")
+        if RequestLimitManager.shared.canSendRequest() {
+            let userIndex = messagesCollectionView.messages.count
+            messagesCollectionView.messages.append(ChatMessage(role: "user", content: text))
+            
+            self.messagesCollectionView.performBatchUpdates({
+                self.messagesCollectionView.insertSections([userIndex])
+            })
+            
+            openAiApi.userMessage = text
+            openAiApi.sendData()
+            
+            AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
+            fieldText.endEditing(true)
+            UserDefaults.standard.set(false, forKey: "isEditing")
+            
+            openAiApi.loadData { [weak self] response in
+                guard let self, let reply = response else { return }
+                
+                RequestLimitManager.shared.registerRequest()
+                AnimationManager().animateLabelWithBottomSlide(view: centerDetailLabelButton, duration: 0.15)
+                UIView.animate(withDuration: 0, delay: 0.1, animations: {
+                    self.centerDetailLabelButton.refresh()
+                })
+                
+                let systemIndex = self.messagesCollectionView.messages.count
+                self.messagesCollectionView.messages.append(ChatMessage(role: "assistant", content: reply))
+                
+                self.messagesCollectionView.performBatchUpdates({
+                    self.messagesCollectionView.insertSections([systemIndex])
+                })
+            }
+        } else {
+            print("Daily limit")
+        }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [self] in
             NSLayoutConstraint.deactivate(fieldTextStandardConstraint)

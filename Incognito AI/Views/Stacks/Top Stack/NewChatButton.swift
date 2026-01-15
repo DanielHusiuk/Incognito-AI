@@ -26,30 +26,6 @@ class NewChatButton: UIButton {
         setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 22, weight: .regular), forImageIn: .normal)
         tintColor = .white
         layer.cornerRadius = 25
-        
-        addTarget(self, action: #selector(newChatButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
-        addTarget(self, action: #selector(newChatButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
-        addTarget(self, action: #selector(newChatButtonTouchUp), for: [.touchUpInside])
-    }
-    
-    @objc func newChatButtonTouchDown() {
-        isHighlighted = true
-    }
-    
-    @objc func newChatButtonCancel() {
-        UIView.animate(withDuration: 0.1, animations: {
-            self.isHighlighted = false
-        })
-    }
-    
-    @objc func newChatButtonTouchUp() {
-        UIView.animate(withDuration: 0.1, animations: {
-            self.isHighlighted = false
-        })
-        
-        if UserDefaults.standard.bool(forKey: "HapticState") {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        }
     }
 
 }

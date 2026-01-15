@@ -12,14 +12,7 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICo
     weak var externalScrollDelegate: UIScrollViewDelegate?
     let layout = UICollectionViewFlowLayout()
     
-    var messages: [ChatMessage] = [
-        ChatMessage(role: "user", content: "user\nWhat is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
-        ChatMessage(role: "system", content: "system\nWhat is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
-        ChatMessage(role: "user", content: "user\nHello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world??"),
-        ChatMessage(role: "user", content: "Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world!Hello world?"),
-        ChatMessage(role: "system", content: "system\nWhat is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
-        ChatMessage(role: "user", content: "user")
-    ]
+    var messages: [ChatMessage] = []
     
     convenience init() {
         self.init(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
@@ -103,13 +96,14 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICo
         let message = messages[indexPath.section].content as NSString
         let maxWidth = collectionView.bounds.width * 0.8
         
-        let boundingRect = message.boundingRect(
-            with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude),
-            options: [.usesFontLeading, .usesLineFragmentOrigin],
-            attributes: [.font: UIFont.systemFont(ofSize: 16)],
-            context: nil
-        )
-        let height = ceil(boundingRect.height) + 20
+        let tempTextView = UITextView()
+        tempTextView.font = UIFont.systemFont(ofSize: 16)
+        tempTextView.text = message as String
+        tempTextView.textContainerInset = .zero
+        tempTextView.textContainer.lineFragmentPadding = 0
+        
+        let textSize = tempTextView.sizeThatFits(CGSize(width: maxWidth - 28, height: .greatestFiniteMagnitude))
+        let height = ceil(textSize.height) + 20
         return CGSize(width: collectionView.bounds.width, height: height)
     }
     
