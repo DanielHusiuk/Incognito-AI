@@ -42,7 +42,7 @@ struct AiPickerModel {
         
         PickerButton(id: 2,
                      title: "Meta Llama 4 Scout 17B",
-                     image: UIImage(named: "perplexity")!,
+                     image: UIImage(named: "meta")!,
                      model: "meta/Llama-4-Scout-17B-16E-Instruct",
                      requestsPerDay: 50,
                      backgroundColor: [Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.6592381612, green: 0, blue: 1, alpha: 1)), Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.6592381612, green: 0, blue: 1, alpha: 1))],
@@ -52,7 +52,7 @@ struct AiPickerModel {
         
         PickerButton(id: 3,
                      title: "X Grok 3 Mini",
-                     image: UIImage(named: "gemini")!,
+                     image: UIImage(named: "grok")!,
                      model: "xai/grok-3-mini",
                      requestsPerDay: 30,
                      backgroundColor: [Color(#colorLiteral(red: 0.7524403038, green: 0.2176528094, blue: 0.1753449346, alpha: 1)), Color(#colorLiteral(red: 0.9843137255, green: 0.737254902, blue: 0.01960784314, alpha: 1)), Color(#colorLiteral(red: 0.2039215686, green: 0.6588235294, blue: 0.3254901961, alpha: 1)), Color(#colorLiteral(red: 0.2588235294, green: 0.5215686275, blue: 0.9568627451, alpha: 1))],

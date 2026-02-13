@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import Combine
 
 class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDelegate {
     
@@ -47,6 +48,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     let messagesCollectionView = MessagesCollectionView()
     private var topBlurHostingController: UIViewController?
     
+    private let networkManager = NetworkManager()
+    private var cancellables = Set<AnyCancellable>()
+    private var previousNetworkState: Bool?
+    
     private var isUserAtBottom: Bool {
         return messagesCollectionView.isRoughlyAtBottom(tolerance: fieldTextHeightConstraint.constant + 5)
     }
@@ -59,7 +64,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         loadUserDefaults()
         loadTopView()
         loadBottomView()
+        
         loadNotifications()
+        setupNetworkObservation()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -223,6 +230,34 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+    
+    
+    //MARK: - Network Handling
+    
+    private func setupNetworkObservation() {
+        networkManager.$hasNetworkConnection
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isConnected in
+                self?.updateUINetworkStatus(isConnected)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func updateUINetworkStatus(_ isAvailable: Bool) {
+        fieldText.isUserInteractionEnabled = isAvailable
+        fieldPlaceholder.text = isAvailable ? "Ask AI anything..." : "Internet connection is lost."
+        
+        sendButton.setImage(UIImage(systemName: isAvailable ? "arrow.up" : "wifi.slash"), for: .normal)
+        sendButton.isUserInteractionEnabled = isAvailable
+        
+        if previousNetworkState != nil && previousNetworkState == true && isAvailable == false {
+            let networkAlert = UIAlertController(title: "No internet connection", message: "Please check your internet connection.", preferredStyle: .alert)
+            networkAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(networkAlert, animated: true, completion: nil)
+        }
+        
+        previousNetworkState = isAvailable
     }
     
     
@@ -596,7 +631,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     func fieldPlaceholderSetup() {
         fieldPlaceholder.translatesAutoresizingMaskIntoConstraints = false
-        fieldPlaceholder.text = "Ask AI anything..."
         fieldPlaceholder.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         fieldPlaceholder.textColor = UIColor.systemGray2
         fieldPlaceholder.textAlignment = .center
@@ -914,7 +948,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     func sendButtonSetup() {
         sendButton.translatesAutoresizingMaskIntoConstraints = false
         sendButton.imageView?.contentMode = .scaleAspectFit
-        sendButton.setImage(UIImage(systemName: "arrow.up"), for: .normal)
         sendButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(weight: .semibold), forImageIn: .normal)
         sendButton.tintColor = .white
         sendButton.backgroundColor = #colorLiteral(red: 0.02999999933, green: 0.02999999933, blue: 0.02999999933, alpha: 1)
