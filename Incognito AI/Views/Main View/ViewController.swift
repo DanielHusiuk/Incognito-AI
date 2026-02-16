@@ -44,13 +44,16 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
     let scrollDownButton = ScrollDownButton()
     
-    let openAiApi = ApiManager()
+    let apiManager = ApiManager()
     let messagesCollectionView = MessagesCollectionView()
     private var topBlurHostingController: UIViewController?
     
     private let networkManager = NetworkManager()
     private var cancellables = Set<AnyCancellable>()
     private var previousNetworkState: Bool?
+    
+    private var typingTimer: Timer?
+    var loadingIndicator: UIActivityIndicatorView = .init(style: .medium)
     
     private var isUserAtBottom: Bool {
         return messagesCollectionView.isRoughlyAtBottom(tolerance: fieldTextHeightConstraint.constant + 5)
@@ -144,9 +147,12 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         fieldPlaceholderSetup()
         
         sendButtonSetup()
+        loadingIndicatorSetup()
+        
         aiPickerViewSetup()
         aiPickerStackSetup()
         addAiPickerViewData()
+        
         dismissKeyboardButtonSetup()
         scrollDownButtonSetup()
     }
@@ -260,6 +266,12 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         previousNetworkState = isAvailable
     }
     
+    private func userNotification(title: String, message: String) {
+        let errorAlert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(errorAlert, animated: true, completion: nil)
+    }
+    
     
     //MARK: - Messages UI
     
@@ -303,6 +315,73 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         messagesCollectionView.contentInset.bottom = finalInset
         messagesCollectionView.verticalScrollIndicatorInsets.bottom = finalInset
+    }
+    
+    
+    //MARK: - Typing Animation
+    
+    func animateTypingWords(_ fullText: String, to index: Int) {
+        typingTimer?.invalidate()
+        
+        let words = fullText.split(separator: " ")
+        var currentIndex = 0
+        var currentText = ""
+        
+        typingTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                timer.invalidate()
+                return
+            }
+            
+            if currentIndex >= words.count {
+                timer.invalidate()
+                return
+            }
+            
+            let prefix = currentText.isEmpty ? "" : " "
+            currentText += prefix + words[currentIndex]
+            currentIndex += 1
+            
+            self.messagesCollectionView.messages[index].content = currentText
+            
+            let indexPath = IndexPath(item: 0, section: index)
+            if let cell = self.messagesCollectionView.cellForItem(at: indexPath) as? MessageCollectionViewCell {
+                cell.configure(with: currentText, role: "assistant")
+                
+                UIView.performWithoutAnimation {
+                    self.messagesCollectionView.performBatchUpdates(nil, completion: nil)
+                }
+                
+                if self.isUserAtBottom {
+                    let contentHeight = self.messagesCollectionView.contentSize.height
+                    let boundsHeight = self.messagesCollectionView.bounds.height
+                    let insets = self.messagesCollectionView.adjustedContentInset
+                    
+                    let rawOffsetY = contentHeight + insets.bottom - boundsHeight
+                    let finalOffsetY = max(rawOffsetY, -insets.top)
+                    self.messagesCollectionView.setContentOffset(CGPoint(x: 0, y: finalOffsetY), animated: false)
+                }
+            }
+        }
+    }
+    
+    
+    //MARK: - Loading Indicator
+    
+    func loadingIndicatorSetup() {
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        loadingIndicator.backgroundColor = .clear
+        loadingIndicator.color = .white
+        loadingIndicator.hidesWhenStopped = true
+        loadingIndicator.isHidden = true
+        
+        sendButton.addSubview(loadingIndicator)
+        NSLayoutConstraint.activate([
+            loadingIndicator.centerXAnchor.constraint(equalTo: sendButton.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: sendButton.centerYAnchor),
+            loadingIndicator.heightAnchor.constraint(equalTo: sendButton.heightAnchor),
+            loadingIndicator.widthAnchor.constraint(equalTo: sendButton.widthAnchor)
+        ])
     }
     
     
@@ -507,7 +586,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     func textFieldTextSetup() {
         fieldText.delegate = self
         fieldText.text = ""
-        fieldText.font = .systemFont(ofSize: 16, weight: .medium)
+        fieldText.font = .systemFont(ofSize: 16, weight: .regular)
         fieldText.translatesAutoresizingMaskIntoConstraints = false
         fieldText.autocapitalizationType = .sentences
         fieldText.autocorrectionType = .yes
@@ -994,16 +1073,25 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                 self.messagesCollectionView.insertSections([userIndex])
             })
             
-            openAiApi.userMessage = text
-            openAiApi.sendData()
+            apiManager.userMessage = text
+            apiManager.sendData()
             
             AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
             fieldText.endEditing(true)
             UserDefaults.standard.set(false, forKey: "isEditing")
             
-            openAiApi.loadData { [weak self] response in
-                guard let self, let reply = response else { return }
+            apiManager.loadData { [weak self] successMessage, errorMessage in
+                guard let self = self else { return }
+               
+                if let error = errorMessage {
+                    self.userNotification(title: "Error", message: error)
+                    self.loadingIndicator.stopAnimating()
+                    self.sendButton.isUserInteractionEnabled = true
+                    self.sendButton.setImage(UIImage(systemName: "arrow.up"), for: .normal)
+                    return
+                }
                 
+                guard let reply = successMessage else { return }
                 RequestLimitManager.shared.registerRequest()
                 AnimationManager().animateLabelWithBottomSlide(view: centerDetailLabelButton, duration: 0.15)
                 UIView.animate(withDuration: 0, delay: 0.1, animations: {
@@ -1011,14 +1099,34 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                 })
                 
                 let systemIndex = self.messagesCollectionView.messages.count
-                self.messagesCollectionView.messages.append(ChatMessage(role: "assistant", content: reply))
+                self.messagesCollectionView.messages.append(ChatMessage(role: "assistant", content: " "))
                 
                 self.messagesCollectionView.performBatchUpdates({
                     self.messagesCollectionView.insertSections([systemIndex])
+                }, completion: { _ in
+                    self.animateTypingWords(reply, to: systemIndex)
                 })
             }
+            
+            loadingIndicator.startAnimating()
+            sendButton.isUserInteractionEnabled = false
+            sendButton.setImage(UIImage(systemName: ""), for: .normal)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0, execute: {
+                self.loadingIndicator.stopAnimating()
+                self.sendButton.isUserInteractionEnabled = true
+                self.sendButton.setImage(UIImage(systemName: "arrow.up"), for: .normal)
+                self.sendButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(weight: .semibold), forImageIn: .normal)
+            })
+            
         } else {
-            print("Daily limit")
+            AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
+            fieldText.endEditing(true)
+            UserDefaults.standard.set(false, forKey: "isEditing")
+            
+            let limitAlert = UIAlertController(title: "Daily Limit", message: "You have exceeded your daily limit of requests.\n\nChange model or come back tomorrow!", preferredStyle: .alert)
+            limitAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(limitAlert, animated: true, completion: nil)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [self] in
@@ -1272,48 +1380,44 @@ extension UIScrollView {
 extension ViewController: UIScreenshotServiceDelegate {
     
     func screenshotService(_ screenshotService: UIScreenshotService, generatePDFRepresentationWithCompletion completionHandler: @escaping (Data?, Int, CGRect) -> Void) {
+        let collectionView = self.messagesCollectionView
+        let layout = collectionView.collectionViewLayout
+        let contentSize = layout.collectionViewContentSize
         
-        DispatchQueue.main.async {
-            let pdfData = NSMutableData()
-            let originalOffset = self.messagesCollectionView.contentOffset
-            let originalFrame = self.messagesCollectionView.frame
-            
-            let contentSize = self.messagesCollectionView.collectionViewLayout.collectionViewContentSize
-            let visibleHeight = self.messagesCollectionView.bounds.height
-            UIGraphicsBeginPDFContextToData(pdfData, CGRect(origin: .zero, size: contentSize), nil)
-            
-            var offsetY: CGFloat = 0
-            var pageIndex = 0
-            
-            while offsetY < contentSize.height {
-                autoreleasepool {
-                    let pageFrame = CGRect(x: 0, y: offsetY, width: contentSize.width, height: min(visibleHeight, contentSize.height - offsetY))
-                    UIGraphicsBeginPDFPageWithInfo(pageFrame, nil)
-                    
-                    guard let context = UIGraphicsGetCurrentContext() else { return }
-                    self.messagesCollectionView.contentOffset = CGPoint(x: 0, y: offsetY)
-                    self.messagesCollectionView.layoutIfNeeded()
-                    
-                    context.saveGState()
-                    context.setFillColor(UIColor.systemBackground.cgColor)
-                    context.fill(pageFrame)
-                    context.restoreGState()
-                    
-                    context.saveGState()
-                    context.translateBy(x: 0, y: -offsetY)
-                    self.messagesCollectionView.layer.render(in: context)
-                    context.restoreGState()
-                    
-                    offsetY += visibleHeight
-                    pageIndex += 1
-                }
-            }
-            UIGraphicsEndPDFContext()
-            
-            self.messagesCollectionView.contentOffset = originalOffset
-            self.messagesCollectionView.frame = originalFrame
-            self.messagesCollectionView.layoutIfNeeded()
-            completionHandler(pdfData as Data, pageIndex, CGRect(origin: .zero, size: contentSize))
+        guard contentSize.height > 0 && !collectionView.messages.isEmpty else {
+            completionHandler(nil, 0, .zero)
+            return
         }
+        
+        let pdfBounds = CGRect(origin: .zero, size: contentSize)
+        let pdfData = NSMutableData()
+        
+        UIGraphicsBeginPDFContextToData(pdfData, pdfBounds, nil)
+        UIGraphicsBeginPDFPageWithInfo(pdfBounds, nil)
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        
+        let renderCell = MessageCollectionViewCell(frame: .zero)
+        
+        for section in 0..<collectionView.messages.count {
+            let indexPath = IndexPath(item: 0, section: section)
+            
+            if let attributes = layout.layoutAttributesForItem(at: indexPath) {
+                let message = collectionView.messages[section]
+                renderCell.frame = attributes.frame
+                renderCell.contentView.frame = renderCell.bounds
+                
+                renderCell.configure(with: message.content, role: message.role)
+                renderCell.updateBubbleWidth(maxWidth: collectionView.bounds.width * 0.8)
+                renderCell.layoutIfNeeded()
+                
+                context.saveGState()
+                context.translateBy(x: attributes.frame.origin.x, y: attributes.frame.origin.y)
+                renderCell.layer.render(in: context)
+                context.restoreGState()
+            }
+        }
+        
+        UIGraphicsEndPDFContext()
+        completionHandler(pdfData as Data, 0, pdfBounds)
     }
 }

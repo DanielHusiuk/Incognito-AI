@@ -93,12 +93,11 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICo
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let message = messages[indexPath.section].content as NSString
+        let message = messages[indexPath.section]
         let maxWidth = collectionView.bounds.width * 0.8
         
         let tempTextView = UITextView()
-        tempTextView.font = UIFont.systemFont(ofSize: 16)
-        tempTextView.text = message as String
+        tempTextView.attributedText = MarkdownManager.format(text: message.content, isUser: message.role == "user")
         tempTextView.textContainerInset = .zero
         tempTextView.textContainer.lineFragmentPadding = 0
         

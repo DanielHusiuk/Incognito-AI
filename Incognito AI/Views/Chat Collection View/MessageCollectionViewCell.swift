@@ -69,14 +69,15 @@ final class MessageCollectionViewCell: UICollectionViewCell {
     
     func updateBubbleWidth(maxWidth: CGFloat) {
         bubbleViewWidthConstraint.constant = maxWidth
-        ShadowManager().applyShadow(to: bubbleView, opacity: 0.2, shadowRadius: 5, viewBounds: bubbleView.bounds.insetBy(dx: 0, dy: 5))
         layoutIfNeeded()
+        ShadowManager().applyShadow(to: bubbleView, opacity: 0.2, shadowRadius: 5, viewBounds: bubbleView.bounds.insetBy(dx: 0, dy: 5))
     }
     
     func configure(with text: String, role: String) {
-        messageLabel.text = text
+        let isUser = (role == "user")
+        messageLabel.attributedText = MarkdownManager.format(text: text, isUser: isUser)
         
-        if role == "user" {
+        if isUser {
             leftConstraint.isActive = false
             rightConstraint.isActive = true
             bubbleView.backgroundColor = .userBubble
