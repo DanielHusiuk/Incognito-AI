@@ -280,6 +280,23 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         messagesCollectionView.delegate = self
         messagesCollectionView.keyboardDismissMode = .interactive
         
+        messagesCollectionView.onResend = { [weak self] resendText in
+            guard let self = self else { return }
+            fieldText.text = ""
+            fieldText.text = resendText
+            sendButton.sendActions(for: .touchUpInside)
+        }
+        
+        messagesCollectionView.onNewConversation = { [weak self] resendText in
+            guard let self = self else { return }
+            UserDefaults.standard.set(resendText, forKey: "newConversationMessage")
+            newChatButton.sendActions(for: .touchUpInside)
+            fieldText.text = ""
+            fieldText.text = UserDefaults.standard.string(forKey: "newConversationMessage")
+            sendButton.sendActions(for: .touchUpInside)
+            UserDefaults.standard.removeObject(forKey: "newConversationMessage")
+        }
+        
         view.addSubview(messagesCollectionView)
         NSLayoutConstraint.activate([
             messagesCollectionView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -1019,6 +1036,8 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         }) { _ in
             self.aiPickerView.isHidden = true
         }
+        
+        NotificationCenter.default.post(name: Notification.Name("tintColorChanged"), object: nil)
     }
     
     
@@ -1419,5 +1438,20 @@ extension ViewController: UIScreenshotServiceDelegate {
         
         UIGraphicsEndPDFContext()
         completionHandler(pdfData as Data, 0, pdfBounds)
+    }
+}
+
+extension UserDefaults {
+    func setColor(_ color: UIColor, forKey key: String) {
+        let colorData = try? NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false)
+        set(colorData, forKey: key)
+    }
+    
+    func color(forKey key: String) -> UIColor? {
+        guard let colorData = data(forKey: key),
+              let color = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: colorData) else {
+            return nil
+        }
+        return color
     }
 }

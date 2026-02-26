@@ -29,17 +29,18 @@ struct SettingsModel {
         ]),
         
         SettingsCell(id: 4, titleImage: UIImage(systemName: "circle.righthalf.filled")!, title: "Appearance", header: "Customisation:", footer: "", cells: [
-            SettingsCell(id: 5, titleImage: UIImage(systemName: "arrow.triangle.2.circlepath")!, title: "Landscape Mode", header: "", footer: "", cells: []),
-            SettingsCell(id: 6, titleImage: UIImage(systemName: "sparkles.rectangle.stack")!, title: "Background animation", header: "", footer: "", cells: [])
+            SettingsCell(id: 5, titleImage: UIImage(systemName: "paintpalette")!, title: "Accent color", header: "", footer: "", cells: []),
+            SettingsCell(id: 6, titleImage: UIImage(systemName: "arrow.triangle.2.circlepath")!, title: "Landscape mode", header: "", footer: "", cells: []),
+            SettingsCell(id: 7, titleImage: UIImage(systemName: "sparkles.rectangle.stack")!, title: "Background animation", header: "", footer: "", cells: [])
         ]),
         
-        SettingsCell(id: 7, titleImage: UIImage(systemName: "hand.tap")!, title: "Haptic Feedback", header: "Preferences:", footer: "", cells: [
-            SettingsCell(id: 8, titleImage: UIImage(systemName: "globe")!, title: "App Language", header: "", footer: "", cells: [])
+        SettingsCell(id: 8, titleImage: UIImage(systemName: "hand.tap")!, title: "Haptic feedback", header: "Preferences:", footer: "", cells: [
+            SettingsCell(id: 9, titleImage: UIImage(systemName: "globe")!, title: "App language", header: "", footer: "", cells: [])
         ]),
         
-        SettingsCell(id: 9, titleImage: UIImage(systemName: "envelope")!, title: "Send Feedback", header: "Other:", footer: "", cells: [
-            SettingsCell(id: 10, titleImage: UIImage(systemName: "exclamationmark.triangle.fill")!, title: "Report a Bug", header: "", footer: "", cells: [])]),
+        SettingsCell(id: 10, titleImage: UIImage(systemName: "envelope")!, title: "Send feedback", header: "Other:", footer: "", cells: [
+            SettingsCell(id: 11, titleImage: UIImage(systemName: "exclamationmark.triangle.fill")!, title: "Report a bug", header: "", footer: "", cells: [])]),
         
-        SettingsCell(id: 11, titleImage: UIImage(systemName: "person.fill")!, accessoryImage: UIImage(named: "github"), title: "Author:  Daniel Husiuk", header: "", footer: "• Incognito AI App •\nversion 1.0", cells: []),
+        SettingsCell(id: 12, titleImage: UIImage(systemName: "person.fill")!, accessoryImage: UIImage(named: "github"), title: "Author:  Daniel Husiuk", header: "", footer: "• Incognito AI App •\nVersion \(String(describing: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"))", cells: []),
     ]
 }

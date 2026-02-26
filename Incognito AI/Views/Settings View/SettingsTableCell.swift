@@ -11,6 +11,7 @@ class SettingsTableCell: UITableViewCell {
     
     let customCellView = UIView()
     let tableViewCellHeight = SettingsTableView().tableViewCellHeight
+    var isHighlightable: Bool = true
     
     var titleLabelLeadingConstraint: NSLayoutConstraint!
     var titleLabelCenterConstraint: NSLayoutConstraint!
@@ -156,7 +157,10 @@ class SettingsTableCell: UITableViewCell {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
-        customCellView.backgroundColor = .cellBackground
+        
+        if isHighlightable {
+            customCellView.backgroundColor = .cellBackground
+        }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {

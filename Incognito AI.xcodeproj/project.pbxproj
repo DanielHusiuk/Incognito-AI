@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6555BDCC2F44B0C500524402 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 6555BDCB2F44B0C500524402 /* Settings.bundle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		650B30032E72E95C000CBAD3 /* Incognito AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Incognito AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6555BDCB2F44B0C500524402 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -45,6 +50,7 @@
 		650B2FFA2E72E95C000CBAD3 = {
 			isa = PBXGroup;
 			children = (
+				6555BDCB2F44B0C500524402 /* Settings.bundle */,
 				650B30052E72E95C000CBAD3 /* Incognito AI */,
 				650B30042E72E95C000CBAD3 /* Products */,
 			);
@@ -122,6 +128,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6555BDCC2F44B0C500524402 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

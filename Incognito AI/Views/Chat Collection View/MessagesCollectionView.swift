@@ -13,6 +13,8 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICo
     let layout = UICollectionViewFlowLayout()
     
     var messages: [ChatMessage] = []
+    var onResend: ((String) -> Void)?
+    var onNewConversation: ((String) -> Void)?
     
     convenience init() {
         self.init(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
@@ -136,7 +138,17 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICo
             let copy = UIAction(title: "Copy", image: UIImage(systemName: "doc.on.doc")) { _ in
                 UIPasteboard.general.string = self.messages[indexPath.section].content
             }
-            return UIMenu(title: "", children: [copy])
+            
+            let resend = UIAction(title: "Resend", image: UIImage(systemName: "arrow.counterclockwise")) { _ in
+                let resendText = self.messages[indexPath.section].content
+                self.onResend?(resendText)
+            }
+            
+            let newConversation = UIAction(title: "Start new conversation with this message", image: UIImage(systemName: "text.bubble")) { _ in
+                let resendText = self.messages[indexPath.section].content
+                self.onNewConversation?(resendText)
+            }
+            return UIMenu(title: "", children: [copy, resend, newConversation])
         }
     }
     
