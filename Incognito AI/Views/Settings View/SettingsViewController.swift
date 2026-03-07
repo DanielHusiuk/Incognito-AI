@@ -47,6 +47,9 @@ class SettingsViewController: UIViewController {
         backgroundGradientSetup()
         navigationGradientSetup()
         bottomGradientSetup()
+        
+        ShadowManager().applyShadow(to: closeSettingsButton, opacity: 0.1, shadowRadius: 10, viewBounds: closeSettingsButton.bounds.insetBy(dx: 0, dy: 3))
+        ShadowManager().applyShadow(to: resetSettingsButton, opacity: 0.1, shadowRadius: 10, viewBounds: resetSettingsButton.bounds.insetBy(dx: 0, dy: 3))
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {

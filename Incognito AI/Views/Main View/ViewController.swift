@@ -47,6 +47,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     let apiManager = ApiManager()
     let messagesCollectionView = MessagesCollectionView()
     private var topBlurHostingController: UIViewController?
+    private var bottomBlurHostingController: UIViewController?
     
     private let networkManager = NetworkManager()
     private var cancellables = Set<AnyCancellable>()
@@ -56,7 +57,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     var loadingIndicator: UIActivityIndicatorView = .init(style: .medium)
     
     private var isUserAtBottom: Bool {
-        return messagesCollectionView.isRoughlyAtBottom(tolerance: fieldTextHeightConstraint.constant + 5)
+        return messagesCollectionView.isRoughlyAtBottom(tolerance: 40)
     }
     
     override func viewDidLoad() {
@@ -84,6 +85,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        self.updateBlurVisibility(for: self.messagesCollectionView)
         DispatchQueue.main.async {
             self.loadShadows()
             self.keyboardSwipeDownAnimation()
@@ -98,6 +100,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         DispatchQueue.main.async {
             self.messagesCollectionView.layoutIfNeeded()
             self.updateScrollDownButton()
+            self.updateBlurVisibility(for: self.messagesCollectionView)
         }
     }
     
@@ -190,31 +193,11 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             let orientation = windowScene.interfaceOrientation
             if orientation.isPortrait {
                 resizeTextView(fieldText)
-                guard topStackView.alpha == 0 else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                    UIView.animate(withDuration: 0.2, animations: {
-                        self.topStackView.alpha = 1
-                        self.settingsButton.alpha = 1
-                        self.newChatButton.alpha = 1
-                        self.topBlurHostingController?.view.alpha = 1
-                        self.collectionViewLayout()
-                        self.messagesCollectionView.layoutIfNeeded()
-                    })
-                })
+                collectionViewLayout()
+                messagesCollectionView.layoutIfNeeded()
             } else {
                 resizeTextView(fieldText)
-                guard topStackView.alpha == 1 else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
-                    UIView.animate(withDuration: 0.2, animations: {
-                        self.topStackView.alpha = 0
-                        self.settingsButton.alpha = 0
-                        self.newChatButton.alpha = 0
-                        self.topBlurHostingController?.view.alpha = 0
-                        self.messagesCollectionView.contentInset.top = 0
-                        self.messagesCollectionView.verticalScrollIndicatorInsets.top = 0
-                        self.messagesCollectionView.layoutIfNeeded()
-                    })
-                })
+                messagesCollectionView.layoutIfNeeded()
             }
         }
     }
@@ -307,12 +290,14 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard scrollView == messagesCollectionView else { return }
         updateScrollDownButton()
+        updateBlurVisibility(for: scrollView)
         self.view.layoutIfNeeded()
     }
     
     private func updateScrollDownButton() {
-        let isVisuallyBottom = messagesCollectionView.isVisuallyAtBottom(tolerance: 30)
+        let isVisuallyBottom = messagesCollectionView.isVisuallyAtBottom(tolerance: 40)
         let shouldShow = !isVisuallyBottom
         
         UIView.animate(withDuration: 0.2) {
@@ -445,6 +430,34 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             hostingController.view.trailingAnchor.constraint(equalTo: bottomStackView.trailingAnchor),
             hostingController.view.heightAnchor.constraint(equalTo: bottomStackView.heightAnchor)
         ])
+        self.bottomBlurHostingController = hostingController
+    }
+    
+    func updateBlurVisibility(for scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let boundsHeight = scrollView.bounds.height
+        let insets = scrollView.adjustedContentInset
+        let fadeDistance: CGFloat = 30
+        
+        let minOffsetY = -insets.top
+        let distanceFromTop = offsetY - minOffsetY
+        let topAlpha = max(0, min(1, distanceFromTop / fadeDistance))
+        
+        let maxOffsetY = max(minOffsetY, contentHeight + insets.bottom - boundsHeight)
+        let distanceFromBottom = maxOffsetY - offsetY
+        
+        let bottomAlpha: CGFloat
+        if contentHeight + insets.top + insets.bottom <= boundsHeight {
+            bottomAlpha = 0
+        } else {
+            bottomAlpha = max(0, min(1, distanceFromBottom / fadeDistance))
+        }
+        
+        UIView.animate(withDuration: 0.15, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction], animations: {
+            self.topBlurHostingController?.view.alpha = topAlpha
+            self.bottomBlurHostingController?.view.alpha = bottomAlpha
+        }, completion: nil)
     }
     
     
@@ -864,6 +877,14 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         if aiPickerView.isHidden {
             //show
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+            let orientation = windowScene.interfaceOrientation
+            
+            if orientation.isLandscape && fieldText.isEditing {
+                print("yes")
+                dismissKeyboardButton.sendActions(for: .touchUpInside)
+            }
+            
             aiPickerView.alpha = 1
             aiPickerView.isHidden = false
             aiPickerContainer.isUserInteractionEnabled = true
@@ -1332,9 +1353,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     @objc func keyboardWillChangeFrame(_ notification: Notification) {
+        let wasAtBottom = self.isUserAtBottom
         messagesCollectionViewInsets()
         
-        if isUserAtBottom {
+        if wasAtBottom {
             scrollDownButtonKeyboardAnimation(notification: notification)
         }
     }
@@ -1387,7 +1409,7 @@ extension UITextView {
 
 extension UIScrollView {
     func isRoughlyAtBottom(tolerance: CGFloat = 30) -> Bool {
-        return contentOffset.y + bounds.height >= contentSize.height - tolerance
+        return contentOffset.y + bounds.height - adjustedContentInset.bottom >= contentSize.height - tolerance
     }
     
     func isVisuallyAtBottom(tolerance: CGFloat = 30) -> Bool {

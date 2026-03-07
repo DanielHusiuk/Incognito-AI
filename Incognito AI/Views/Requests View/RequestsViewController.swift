@@ -13,7 +13,7 @@ class RequestsViewController: UIViewController {
     let requestsTitle: UILabel! = .init(frame: .zero)
     let closeButton: UIButton! = .init(frame: .zero)
     let fadeView: UIView! = .init(frame: .zero)
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundSetup()
@@ -23,9 +23,15 @@ class RequestsViewController: UIViewController {
         closeButtonSetup()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        updateButtonColor(button: closeButton)
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         gradientSetup()
+        ShadowManager().applyShadow(to: closeButton, opacity: 0.1, shadowRadius: 10, viewBounds: closeButton.bounds.insetBy(dx: 0, dy: 5))
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -91,7 +97,7 @@ class RequestsViewController: UIViewController {
     
     //MARK: - Navigation Bar
     
-    func titleSetup() {        
+    func titleSetup() {
         requestsTitle.translatesAutoresizingMaskIntoConstraints = false
         requestsTitle.text = "What is request limit?"
         requestsTitle.textColor = .label
@@ -111,10 +117,9 @@ class RequestsViewController: UIViewController {
         closeButton.setTitleColor(.white, for: .normal)
         closeButton.titleLabel?.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
         closeButton.titleLabel?.textAlignment = .center
-        closeButton.backgroundColor = #colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1)
-        closeButton.layer.borderColor = #colorLiteral(red: 0.2567243651, green: 0.5657354798, blue: 0.4573884009, alpha: 1)
         closeButton.layer.borderWidth = 2
         closeButton.layer.cornerRadius = 27.5
+        updateButtonColor(button: closeButton)
         
         closeButton.addTarget(self, action: #selector(closeButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
         closeButton.addTarget(self, action: #selector(closeButtonCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
@@ -122,11 +127,36 @@ class RequestsViewController: UIViewController {
         
         view.addSubview(closeButton)
         NSLayoutConstraint.activate([
-            closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
-            closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+            closeButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             closeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -15),
-            closeButton.heightAnchor.constraint(equalToConstant: 55)
+            closeButton.heightAnchor.constraint(equalToConstant: 55),
+            closeButton.widthAnchor.constraint(equalToConstant: 255)
         ])
+    }
+    
+    func updateButtonColor(button: UIButton) {
+        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
+            button.backgroundColor = selectedTintColor
+            
+            var borderRedColor: CGFloat = 0,
+                borderGreenColor: CGFloat = 0,
+                borderBlueColor: CGFloat = 0,
+                borderAlpha: CGFloat = 0
+            
+            selectedTintColor.getRed(
+                &borderRedColor,
+                green: &borderGreenColor,
+                blue: &borderBlueColor,
+                alpha: &borderAlpha
+            )
+            
+            button.layer.borderColor = UIColor(
+                red: borderRedColor * 0.8,
+                green: borderGreenColor * 0.8,
+                blue: borderBlueColor * 0.8,
+                alpha: borderAlpha * 0.6
+            ).cgColor
+        }
     }
     
     @objc func closeButtonTouchDown() {
@@ -148,5 +178,5 @@ class RequestsViewController: UIViewController {
     
     
     //MARK: - Table View
-
+    
 }

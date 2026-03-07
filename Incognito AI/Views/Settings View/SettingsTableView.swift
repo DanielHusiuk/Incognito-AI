@@ -173,7 +173,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         case 1:
             switch indexPath.row {
             case 0:
-                return cell
+                swipeGesturesButton(in: cell)
             case 1:
                 confirmChatSwitch(in: cell)
             default:
@@ -182,9 +182,9 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         case 2:
             switch indexPath.row {
             case 0:
-                return cell
+                appearanceButton(in: cell)
             case 1:
-                return cell
+                accentColorButton(in: cell)
             case 2:
                 landscapeModeSwitch(in: cell)
             case 3:
@@ -197,7 +197,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
             case 0:
                 hapticSwitch(in: cell)
             case 1:
-                return cell
+                appLanguageButton(in: cell)
             default:
                 return cell
             }
@@ -394,6 +394,29 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     //MARK: - Productivity Section
     
+    func swipeGesturesButton(in cell: UITableViewCell) {
+        swipeGesturesButton.translatesAutoresizingMaskIntoConstraints = false
+        swipeGesturesButton.isUserInteractionEnabled = false
+        
+        var config = UIButton.Configuration.plain()
+        var languageTitle = AttributedString("Left & Right")
+        languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
+        config.attributedTitle = languageTitle
+        
+        config.image = UIImage(systemName: "chevron.right")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold, scale: .medium)
+        config.imagePlacement = .trailing
+        config.imagePadding = 4
+        config.baseForegroundColor = .cellAccessory
+        swipeGesturesButton.configuration = config
+
+        cell.contentView.addSubview(swipeGesturesButton)
+        NSLayoutConstraint.activate([
+            swipeGesturesButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+            swipeGesturesButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+        ])
+    }
+    
     func confirmChatSwitch(in cell: UITableViewCell) {
         if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
             confirmChatSwitch.onTintColor = selectedTintColor
@@ -419,6 +442,52 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     
     //MARK: - Customisation Section
+    
+    func appearanceButton(in cell: UITableViewCell) {
+        appearanceButton.translatesAutoresizingMaskIntoConstraints = false
+        appearanceButton.isUserInteractionEnabled = false
+        
+        var config = UIButton.Configuration.plain()
+        var languageTitle = AttributedString("System")
+        languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
+        config.attributedTitle = languageTitle
+        
+        config.image = UIImage(systemName: "chevron.right")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold, scale: .medium)
+        config.imagePlacement = .trailing
+        config.imagePadding = 4
+        config.baseForegroundColor = .cellAccessory
+        appearanceButton.configuration = config
+
+        cell.contentView.addSubview(appearanceButton)
+        NSLayoutConstraint.activate([
+            appearanceButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+            appearanceButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+        ])
+    }
+    
+    func accentColorButton(in cell: UITableViewCell) {
+        accentColorButton.translatesAutoresizingMaskIntoConstraints = false
+        accentColorButton.isUserInteractionEnabled = false
+        
+        var config = UIButton.Configuration.plain()
+        var languageTitle = AttributedString("Model")
+        languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
+        config.attributedTitle = languageTitle
+        
+        config.image = UIImage(systemName: "chevron.right")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold, scale: .medium)
+        config.imagePlacement = .trailing
+        config.imagePadding = 4
+        config.baseForegroundColor = .cellAccessory
+        accentColorButton.configuration = config
+
+        cell.contentView.addSubview(accentColorButton)
+        NSLayoutConstraint.activate([
+            accentColorButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+            accentColorButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+        ])
+    }
     
     func landscapeModeSwitch(in cell: UITableViewCell) {
         if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
@@ -493,13 +562,36 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         }
     }
     
+    func appLanguageButton(in cell: UITableViewCell) {
+        appLanguageButton.translatesAutoresizingMaskIntoConstraints = false
+        appLanguageButton.isUserInteractionEnabled = false
+        
+        var config = UIButton.Configuration.plain()
+        var languageTitle = AttributedString("English")
+        languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
+        config.attributedTitle = languageTitle
+        
+        config.image = UIImage(systemName: "chevron.right")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold, scale: .medium)
+        config.imagePlacement = .trailing
+        config.imagePadding = 4
+        config.baseForegroundColor = .cellAccessory
+        appLanguageButton.configuration = config
+
+        cell.contentView.addSubview(appLanguageButton)
+        NSLayoutConstraint.activate([
+            appLanguageButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+            appLanguageButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+        ])
+    }
+    
     
     //MARK: - Other Section
     
     func chevronImageView(in cell: UITableViewCell) {
         let chevronImage = UIImageView()
         chevronImage.translatesAutoresizingMaskIntoConstraints = false
-        chevronImage.image = UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .bold))
+        chevronImage.image = UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold))
         chevronImage.tintColor = .cellAccessory
         
         cell.addSubview(chevronImage)
