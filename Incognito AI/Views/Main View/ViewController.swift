@@ -65,10 +65,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         backgroundSetup()
         collectionViewSetup()
         
-        loadUserDefaults()
         loadTopView()
         loadBottomView()
         
+        loadUserDefaults()
         loadNotifications()
         setupNetworkObservation()
     }
@@ -124,6 +124,18 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     func loadUserDefaults() {
         UserDefaults.standard.set(true, forKey: "HapticState")
         UserDefaults.standard.set(false, forKey: "isEditing")
+        
+        if UserDefaults.standard.value(forKey: "buttonId") == nil {
+            if let defaultButton = aiPickerModel.buttons.first {
+                UserDefaults.standard.set(defaultButton.id, forKey: "buttonId")
+                UserDefaults.standard.set(defaultButton.title, forKey: "buttonTitle")
+                UserDefaults.standard.set(defaultButton.model, forKey: "buttonModel")
+                UserDefaults.standard.set(defaultButton.requestsPerDay, forKey: "buttonRequestsPerDay")
+                UserDefaults.standard.setColor(defaultButton.tintColor, forKey: "buttonTintColor")
+            }
+            centerDetailLabelButton.refresh()
+            NotificationCenter.default.post(name: Notification.Name("tintColorChanged"), object: nil)
+        }
     }
     
     func loadTopView() {
@@ -659,6 +671,14 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         NSLayoutConstraint.activate(fieldTextStandardConstraint)
         UserDefaults.standard.set(true, forKey: "isEditing")
         
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        let orientation = windowScene.interfaceOrientation
+        
+        if orientation.isLandscape && !aiPickerView.isHidden {
+            print("close")
+            closeAiPickerView()
+        }
+        
         UIView.animate(withDuration: 0.2, animations: {
             self.fieldPlaceholderCenterConstraint.isActive = false
             self.fieldPlaceholderLeadingConstraint.isActive = true
@@ -881,7 +901,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             let orientation = windowScene.interfaceOrientation
             
             if orientation.isLandscape && fieldText.isEditing {
-                print("yes")
                 dismissKeyboardButton.sendActions(for: .touchUpInside)
             }
             
@@ -898,29 +917,50 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             UIView.animate(withDuration: 0.2,  delay: 0.2, options: .curveLinear, animations: {
                 ShadowManager().applyShadow(to: self.aiPickerShadowView, opacity: 0.2, shadowRadius: 10, viewBounds: self.aiPickerShadowView.bounds.insetBy(dx: 0, dy: 5))
             })
+            
+            startAiPickerTimer()
         } else {
-            //hide
-            aiPickerContainer.isUserInteractionEnabled = false
-            aiPickerShadowView.isUserInteractionEnabled = false
-            
-            UIView.animate(withDuration: 0.2, animations: {
-                ShadowManager().applyShadow(to: self.aiPickerShadowView, opacity: 0, shadowRadius: 0, viewBounds: self.aiPickerShadowView.bounds.insetBy(dx: 0, dy: 0))
-            })
-            
-            UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut, animations: {
-                self.aiButton.transform = CGAffineTransform(rotationAngle: .pi * 2)
-                self.aiPickerView.transform = CGAffineTransform(translationX: 0, y: 262)
-            })
-            
-            UIView.animate(withDuration: 0.2, delay: 0.3, options: .curveLinear, animations: {
-                self.aiPickerView.alpha = 0
-            }) { _ in
-                self.aiPickerView.isHidden = true
-            }
-            
+            closeAiPickerView()
         }
-        
     }
+    
+    private var aiPickerTimer: Timer?
+
+    private func startAiPickerTimer() {
+        aiPickerTimer?.invalidate()
+        aiPickerTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
+            self?.closeAiPickerView()
+        }
+    }
+
+    private func stopAiPickerTimer() {
+        aiPickerTimer?.invalidate()
+        aiPickerTimer = nil
+    }
+    
+    @objc func closeAiPickerView() {
+        guard !aiPickerView.isHidden else { return }
+        stopAiPickerTimer()
+        
+        aiPickerContainer.isUserInteractionEnabled = false
+        aiPickerShadowView.isUserInteractionEnabled = false
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            ShadowManager().applyShadow(to: self.aiPickerShadowView, opacity: 0, shadowRadius: 0, viewBounds: self.aiPickerShadowView.bounds.insetBy(dx: 0, dy: 0))
+        })
+        
+        UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut, animations: {
+            self.aiButton.transform = CGAffineTransform(rotationAngle: .pi * 2)
+            self.aiPickerView.transform = CGAffineTransform(translationX: 0, y: 262)
+        })
+        
+        UIView.animate(withDuration: 0.2, delay: 0.3, options: .curveLinear, animations: {
+            self.aiPickerView.alpha = 0
+        }) { _ in
+            self.aiPickerView.isHidden = true
+        }
+    }
+
     
     
     //MARK: - AI Picker View
@@ -1022,6 +1062,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     @objc func handleButtonTap(_ notification: Notification) {
         guard let button = notification.object as? PickerButton else { return }
+        stopAiPickerTimer()
         aiPickerContainer.isUserInteractionEnabled = false
         aiPickerShadowView.isUserInteractionEnabled = false
         

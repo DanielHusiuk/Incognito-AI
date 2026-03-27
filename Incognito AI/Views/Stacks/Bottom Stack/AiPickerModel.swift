@@ -26,7 +26,7 @@ struct AiPickerModel {
                      image: UIImage(named: "openai")!,
                      model: "openai/gpt-4o-mini",
                      requestsPerDay: 150,
-                     backgroundColor: [Color(#colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1)), Color(#colorLiteral(red: 0.4629276108, green: 1, blue: 0.8083280887, alpha: 1)), Color(#colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1)), Color(#colorLiteral(red: 0.4629276108, green: 1, blue: 0.8083280887, alpha: 1))],
+                     backgroundColor: [Color(#colorLiteral(red: 0.1542924345, green: 0.3336031437, blue: 0.2708898783, alpha: 1)), Color(#colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1)), Color(#colorLiteral(red: 0.1542924345, green: 0.3336031437, blue: 0.2708898783, alpha: 1)), Color(#colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1))],
                      tintColor: #colorLiteral(red: 0.2901960784, green: 0.6274509804, blue: 0.5058823529, alpha: 1),
                      action: { button in
                          didTapButton(button)
@@ -48,8 +48,8 @@ struct AiPickerModel {
                      image: UIImage(named: "meta")!,
                      model: "meta/Llama-4-Scout-17B-16E-Instruct",
                      requestsPerDay: 50,
-                     backgroundColor: [Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.6592381612, green: 0, blue: 1, alpha: 1)), Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.6592381612, green: 0, blue: 1, alpha: 1))],
-                     tintColor: #colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1),
+                     backgroundColor: [Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.5790046453, green: 0, blue: 0.8964880109, alpha: 1)), Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.5294117647, green: 0.09803921569, blue: 0.862745098, alpha: 1))],
+                     tintColor: #colorLiteral(red: 0.5790046453, green: 0, blue: 0.8964880109, alpha: 1),
                      action: { button in
                          didTapButton(button)
                      } ),
@@ -59,8 +59,8 @@ struct AiPickerModel {
                      image: UIImage(named: "grok")!,
                      model: "xai/grok-3-mini",
                      requestsPerDay: 30,
-                     backgroundColor: [Color(#colorLiteral(red: 0.7524403038, green: 0.2176528094, blue: 0.1753449346, alpha: 1)), Color(#colorLiteral(red: 0.9843137255, green: 0.737254902, blue: 0.01960784314, alpha: 1)), Color(#colorLiteral(red: 0.2039215686, green: 0.6588235294, blue: 0.3254901961, alpha: 1)), Color(#colorLiteral(red: 0.2588235294, green: 0.5215686275, blue: 0.9568627451, alpha: 1))],
-                     tintColor: #colorLiteral(red: 0.7524403038, green: 0.2176528094, blue: 0.1753449346, alpha: 1),
+                     backgroundColor: [Color(#colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.8600843549, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.8588235294, green: 0, blue: 0, alpha: 1))],
+                     tintColor: #colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1),
                      action: { button in
                          didTapButton(button)
                      } ),
@@ -70,8 +70,8 @@ struct AiPickerModel {
                      image: UIImage(named: "deepseek")!,
                      model: "deepseek/DeepSeek-V3-0324",
                      requestsPerDay: 50,
-                     backgroundColor: [Color(#colorLiteral(red: 0.337254902, green: 0.4039215686, blue: 0.9607843137, alpha: 1)), Color(#colorLiteral(red: 0.2023848712, green: 0.2449130144, blue: 0.5932173295, alpha: 1)), Color(#colorLiteral(red: 0.337254902, green: 0.4039215686, blue: 0.9607843137, alpha: 1)), Color(#colorLiteral(red: 0.2023848712, green: 0.2449130144, blue: 0.5932173295, alpha: 1))],
-                     tintColor: #colorLiteral(red: 0.337254902, green: 0.4039215686, blue: 0.9607843137, alpha: 1),
+                     backgroundColor: [Color(#colorLiteral(red: 0.2023848712, green: 0.2449130144, blue: 0.5932173295, alpha: 1)), Color(#colorLiteral(red: 0.337254902, green: 0.4039215686, blue: 0.9607843137, alpha: 1)), Color(#colorLiteral(red: 0.2023848712, green: 0.2449130144, blue: 0.5932173295, alpha: 1)), Color(#colorLiteral(red: 0.337254902, green: 0.4039215686, blue: 0.9607843137, alpha: 1))],
+                     tintColor: #colorLiteral(red: 0.2023848712, green: 0.2449130144, blue: 0.5932173295, alpha: 1),
                      action: { button in
                          didTapButton(button)
                      } ),

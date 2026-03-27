@@ -64,6 +64,17 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         dataSource = self
         register(SettingsTableCell.self, forCellReuseIdentifier: "settingsCell")
         
+        keyboardOnLaunchSwitch.tag = 100
+        hideKeyboardSwitch.tag = 100
+        swipeGesturesButton.tag = 100
+        confirmChatSwitch.tag = 100
+        appearanceButton.tag = 100
+        accentColorButton.tag = 100
+        landscapeModeSwitch.tag = 100
+        backgroundAnimationSwitch.tag = 100
+        hapticSwitch.tag = 100
+        appLanguageButton.tag = 100
+        
         indicatorStyle = .default
         backgroundColor = .clear
         contentMode = .scaleAspectFit
@@ -159,6 +170,9 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         
         let shouldHighlight = self.tableView(tableView, shouldHighlightRowAt: indexPath)
         cell.isHighlightable = shouldHighlight
+        
+        cell.subviews.filter { $0.tag == 100 }.forEach { $0.removeFromSuperview() }
+        cell.contentView.subviews.filter { $0.tag == 100 }.forEach { $0.removeFromSuperview() }
         
         switch indexPath.section {
         case 0:
@@ -590,6 +604,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     func chevronImageView(in cell: UITableViewCell) {
         let chevronImage = UIImageView()
+        chevronImage.tag = 100
         chevronImage.translatesAutoresizingMaskIntoConstraints = false
         chevronImage.image = UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold))
         chevronImage.tintColor = .cellAccessory
