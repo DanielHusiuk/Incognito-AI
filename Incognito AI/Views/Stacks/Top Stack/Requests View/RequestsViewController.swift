@@ -10,17 +10,26 @@ import UIKit
 class RequestsViewController: UIViewController {
     
     let backgroundView: UIView! = .init(frame: .zero)
-    let requestsTitle: UILabel! = .init(frame: .zero)
-    let closeButton: UIButton! = .init(frame: .zero)
     let fadeView: UIView! = .init(frame: .zero)
+    let closeButton: UIButton! = .init(frame: .zero)
+    
+    let topTitle: UILabel! = .init(frame: .zero)
+    let requestsCounter: UILabel! = .init(frame: .zero)
+    let requestsLabel: UILabel! = .init(frame: .zero)
+    let explanationLabel: UILabel! = .init(frame: .zero)
+    
+    let remainingRequests = RequestLimitManager.shared.remainingRequestsToday()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundSetup()
         fadeViewSetup()
+        closeButtonSetup()
         
         titleSetup()
-        closeButtonSetup()
+        requestsCounterSetup()
+        requestsLabelSetup()
+        explanationLabelSetup()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -31,7 +40,7 @@ class RequestsViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         gradientSetup()
-        ShadowManager().applyShadow(to: closeButton, opacity: 0.1, shadowRadius: 10, viewBounds: closeButton.bounds.insetBy(dx: 0, dy: 5))
+        ShadowManager().applyShadow(to: closeButton, opacity: 0.2, shadowRadius: 10, viewBounds: closeButton.bounds.insetBy(dx: 0, dy: 5))
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -54,7 +63,7 @@ class RequestsViewController: UIViewController {
         backgroundView.clipsToBounds = true
         backgroundView.layer.cornerRadius = 30
         backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        backgroundView.layer.borderColor = UIColor.sheetBorder.cgColor
+        backgroundView.layer.borderColor = UIColor.systemGray4.cgColor
         backgroundView.layer.borderWidth = 2
         view.addSubview(backgroundView)
         
@@ -95,21 +104,80 @@ class RequestsViewController: UIViewController {
     }
     
     
-    //MARK: - Navigation Bar
+    //MARK: - Labels
     
     func titleSetup() {
-        requestsTitle.translatesAutoresizingMaskIntoConstraints = false
-        requestsTitle.text = "What is request limit?"
-        requestsTitle.textColor = .label
-        requestsTitle.textAlignment = .center
-        requestsTitle.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        view.addSubview(requestsTitle)
+        topTitle.translatesAutoresizingMaskIntoConstraints = false
+        topTitle.text = "What is request limit?"
+        topTitle.textColor = .label
+        topTitle.textAlignment = .center
+        topTitle.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        view.addSubview(topTitle)
         
         NSLayoutConstraint.activate([
-            requestsTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
-            requestsTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            topTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 18),
+            topTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
+    
+    func requestsCounterSetup() {
+        requestsCounter.translatesAutoresizingMaskIntoConstraints = false
+        requestsCounter.text = "\(remainingRequests)"
+        requestsCounter.textColor = .label
+        requestsCounter.textAlignment = .center
+        requestsCounter.font = UIFont.systemFont(ofSize: 80, weight: .bold)
+        view.addSubview(requestsCounter)
+        
+        NSLayoutConstraint.activate([
+            requestsCounter.topAnchor.constraint(equalTo: topTitle.bottomAnchor, constant: 50),
+            requestsCounter.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+    }
+    
+    func requestsLabelSetup() {
+        requestsLabel.translatesAutoresizingMaskIntoConstraints = false
+        requestsLabel.textColor = .label
+        requestsLabel.textAlignment = .center
+        requestsLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        
+        if remainingRequests == 1 {
+            requestsLabel.text = "request left for today"
+        } else {
+            requestsLabel.text = "requests left for today"
+        }
+        
+        view.addSubview(requestsLabel)
+        NSLayoutConstraint.activate([
+            requestsLabel.topAnchor.constraint(equalTo: requestsCounter.bottomAnchor, constant: 10),
+            requestsLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+    }
+    
+    func explanationLabelSetup() {
+        explanationLabel.translatesAutoresizingMaskIntoConstraints = false
+        explanationLabel.numberOfLines = 0
+        explanationLabel.textAlignment = .justified
+        explanationLabel.text = """
+            To keep Incognito AI free, we use GitHub's free developer access, which enforces daily message limits. Request limit reset every day!
+
+            
+            Advanced models use more power and have lower limits than lighter ones. If you run out of requests, simply switch to a different model.
+
+            
+            Sending messages too fast may trigger a temporary block from Ai model. If you get a "too fast" error, just wait a few seconds before trying again.
+            """
+        explanationLabel.textColor = .label
+        explanationLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        view.addSubview(explanationLabel)
+        
+        NSLayoutConstraint.activate([
+            explanationLabel.topAnchor.constraint(equalTo: requestsLabel.bottomAnchor, constant: 60),
+            explanationLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40),
+            explanationLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40)
+        ])
+    }
+    
+    //MARK: - Close Button
     
     func closeButtonSetup() {
         closeButton.translatesAutoresizingMaskIntoConstraints = false
@@ -175,8 +243,5 @@ class RequestsViewController: UIViewController {
         })
         dismiss(animated: true)
     }
-    
-    
-    //MARK: - Table View
     
 }

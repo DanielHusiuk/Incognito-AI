@@ -303,6 +303,7 @@ class SettingsViewController: UIViewController {
         
         settingsTableView.contentInset.top = 60
         settingsTableView.verticalScrollIndicatorInsets.top = 60
+        settingsTableView.verticalScrollIndicatorInsets.bottom = view.safeAreaInsets.bottom + 10
         settingsTableView.setContentOffset(CGPoint(x: 0, y: -60), animated: false)
         view.addSubview(settingsTableView)
         

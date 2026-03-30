@@ -55,6 +55,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     private var typingTimer: Timer?
     var loadingIndicator: UIActivityIndicatorView = .init(style: .medium)
+    var pendingSendText: String?
     
     private var isUserAtBottom: Bool {
         return messagesCollectionView.isRoughlyAtBottom(tolerance: 40)
@@ -277,17 +278,17 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         messagesCollectionView.onResend = { [weak self] resendText in
             guard let self = self else { return }
-            fieldText.text = ""
-            fieldText.text = resendText
+            pendingSendText = resendText
             sendButton.sendActions(for: .touchUpInside)
+            updateScrollDownButton()
+            scrollDownButtonTouchUp()
         }
         
         messagesCollectionView.onNewConversation = { [weak self] resendText in
             guard let self = self else { return }
             UserDefaults.standard.set(resendText, forKey: "newConversationMessage")
             newChatButton.sendActions(for: .touchUpInside)
-            fieldText.text = ""
-            fieldText.text = UserDefaults.standard.string(forKey: "newConversationMessage")
+            pendingSendText = UserDefaults.standard.string(forKey: "newConversationMessage")
             sendButton.sendActions(for: .touchUpInside)
             UserDefaults.standard.removeObject(forKey: "newConversationMessage")
         }
@@ -1144,7 +1145,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             self.sendButton.layer.borderColor = #colorLiteral(red: 0.1999999881, green: 0.1999999881, blue: 0.1999999881, alpha: 1)
         })
         
-        guard let text = fieldText.text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        let rawText = pendingSendText ?? fieldText.text ?? ""
+        pendingSendText = nil
+        let text = rawText
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
         if RequestLimitManager.shared.canSendRequest() {
             let userIndex = messagesCollectionView.messages.count

@@ -14,7 +14,7 @@ struct MarkdownManager {
         
         do {
             var options = AttributedString.MarkdownParsingOptions()
-            options.interpretedSyntax = .full
+            options.interpretedSyntax = isUser ? .inlineOnlyPreservingWhitespace : .full
             options.failurePolicy = .returnPartiallyParsedIfPossible
             
             let attrString = try AttributedString(markdown: text, options: options)
@@ -40,6 +40,13 @@ struct MarkdownManager {
                 mutableString.addAttribute(.paragraphStyle, value: style, range: range)
             }
             
+            while mutableString.length > 0 {
+                let lastChar = mutableString.mutableString.character(at: mutableString.length - 1)
+                
+                guard let scalar = UnicodeScalar(lastChar), CharacterSet.whitespacesAndNewlines.contains(scalar) else { break }
+                mutableString.deleteCharacters(in: NSRange(location: mutableString.mutableString.length - 1, length: 1))
+            }
+            
            return mutableString
         } catch {
             return fallback(text: text, color: textColor)
@@ -47,9 +54,14 @@ struct MarkdownManager {
     }
     
     private static func fallback(text: String, color: UIColor) -> NSAttributedString {
+        let style = NSMutableParagraphStyle()
+        style.lineSpacing = 4
+        style.paragraphSpacing = 4
+        
         let attributes: [NSAttributedString.Key: Any] = [
             .font: UIFont.systemFont(ofSize: 16),
-            .foregroundColor: color
+            .foregroundColor: color,
+            .paragraphStyle: style
         ]
         return NSAttributedString(string: text, attributes: attributes)
     }
