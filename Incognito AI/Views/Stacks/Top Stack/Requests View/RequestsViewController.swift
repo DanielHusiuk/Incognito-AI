@@ -11,35 +11,54 @@ class RequestsViewController: UIViewController {
     
     let backgroundView: UIView! = .init(frame: .zero)
     let fadeView: UIView! = .init(frame: .zero)
-    let closeButton: UIButton! = .init(frame: .zero)
+    
+    let topView: UIView! = .init(frame: .zero)
+    let topGradientView: UIView! = .init(frame: .zero)
+    
+    let bottomView: UIView! = .init(frame: .zero)
+    let bottomGradientView: UIView! = .init(frame: .zero)
     
     let topTitle: UILabel! = .init(frame: .zero)
     let requestsCounter: UILabel! = .init(frame: .zero)
     let requestsLabel: UILabel! = .init(frame: .zero)
-    let explanationLabel: UILabel! = .init(frame: .zero)
+    let explanationScrollView: UIScrollView! = .init(frame: .zero)
+    let explanationStackView: UIStackView! = .init(frame: .zero)
     
-    let remainingRequests = RequestLimitManager.shared.remainingRequestsToday()
+    var requestsCounterTopConstraint: NSLayoutConstraint!
+    var requestsCounterConstant: CGFloat = 0
+    var explanationTopConstraint: NSLayoutConstraint!
+    var explanationConstant: CGFloat = 0
+    let closeButton: UIButton! = .init(frame: .zero)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundSetup()
         fadeViewSetup()
-        closeButtonSetup()
         
         titleSetup()
         requestsCounterSetup()
         requestsLabelSetup()
-        explanationLabelSetup()
+        explanationScrollViewSetup()
+        
+        topViewSetup()
+        topGradientViewSetup()
+        bottomViewSetup()
+        bottomGradientViewSetup()
+        closeButtonSetup()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         updateButtonColor(button: closeButton)
+        updateRequests()
+        checkScreenOrientation()
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        gradientSetup()
+        borderGradientSetup()
+        topGradientSetup()
+        bottomGradientSetup()
         ShadowManager().applyShadow(to: closeButton, opacity: 0.2, shadowRadius: 10, viewBounds: closeButton.bounds.insetBy(dx: 0, dy: 5))
     }
     
@@ -47,6 +66,28 @@ class RequestsViewController: UIViewController {
         super.traitCollectionDidChange(previousTraitCollection)
         if previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle {
             backgroundView.layer.borderColor = UIColor.sheetBorder.cgColor
+        }
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        coordinator.animate(alongsideTransition: { _ in
+            self.checkScreenOrientation()
+            self.view.layoutIfNeeded()
+        })
+    }
+    
+    func checkScreenOrientation() {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            let orientation = windowScene.interfaceOrientation
+            if orientation.isPortrait {
+                requestsCounterTopConstraint.constant = 50
+                explanationTopConstraint.constant = 50
+            } else {
+                requestsCounterTopConstraint.constant = 10
+                explanationTopConstraint.constant = 20
+            }
         }
     }
     
@@ -63,7 +104,7 @@ class RequestsViewController: UIViewController {
         backgroundView.clipsToBounds = true
         backgroundView.layer.cornerRadius = 30
         backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        backgroundView.layer.borderColor = UIColor.systemGray4.cgColor
+        backgroundView.layer.borderColor = UIColor.systemGray5.cgColor
         backgroundView.layer.borderWidth = 2
         view.addSubview(backgroundView)
         
@@ -91,7 +132,7 @@ class RequestsViewController: UIViewController {
         ])
     }
     
-    func gradientSetup() {
+    func borderGradientSetup() {
         let gradientMask = CAGradientLayer()
         gradientMask.frame = fadeView.bounds
         
@@ -101,6 +142,87 @@ class RequestsViewController: UIViewController {
         ]
         gradientMask.locations = [0.0, 0.8]
         fadeView.layer.mask = gradientMask
+    }
+    
+    
+    //MARK: - Gradients
+    
+    func topViewSetup() {
+        topView.translatesAutoresizingMaskIntoConstraints = false
+        topView.backgroundColor = .clear
+        view.addSubview(topView)
+        
+        NSLayoutConstraint.activate([
+            topView.heightAnchor.constraint(equalToConstant: 32),
+            topView.topAnchor.constraint(equalTo: explanationScrollView.topAnchor),
+            topView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 2),
+            topView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -2)
+        ])
+    }
+    
+    func topGradientViewSetup() {
+        topGradientView.translatesAutoresizingMaskIntoConstraints = false
+        topGradientView.isUserInteractionEnabled = false
+        topGradientView.backgroundColor = .systemBackground
+        
+        view.addSubview(topGradientView)
+        NSLayoutConstraint.activate([
+            topGradientView.leadingAnchor.constraint(equalTo: topView.leadingAnchor),
+            topGradientView.trailingAnchor.constraint(equalTo: topView.trailingAnchor),
+            topGradientView.bottomAnchor.constraint(equalTo: topView.bottomAnchor),
+            topGradientView.heightAnchor.constraint(equalTo: topView.heightAnchor)
+        ])
+    }
+    
+    func topGradientSetup() {
+        let gradientMask = CAGradientLayer()
+        gradientMask.frame = topGradientView.bounds
+        
+        gradientMask.colors = [
+            UIColor.black.withAlphaComponent(1.0).cgColor,
+            UIColor.black.withAlphaComponent(0.0).cgColor
+        ]
+        gradientMask.locations = [0.0, 1.0]
+        topGradientView.layer.mask = gradientMask
+    }
+    
+    func bottomViewSetup() {
+        bottomView.translatesAutoresizingMaskIntoConstraints = false
+        bottomView.backgroundColor = .clear
+        view.addSubview(bottomView)
+        
+        NSLayoutConstraint.activate([
+            bottomView.heightAnchor.constraint(equalToConstant: 32),
+            bottomView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
+            bottomView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 2),
+            bottomView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -2)
+        ])
+    }
+    
+    func bottomGradientViewSetup() {
+        bottomGradientView.translatesAutoresizingMaskIntoConstraints = false
+        bottomGradientView.isUserInteractionEnabled = false
+        bottomGradientView.backgroundColor = .systemBackground
+        
+        view.addSubview(bottomGradientView)
+        NSLayoutConstraint.activate([
+            bottomGradientView.leadingAnchor.constraint(equalTo: bottomView.leadingAnchor),
+            bottomGradientView.trailingAnchor.constraint(equalTo: bottomView.trailingAnchor),
+            bottomGradientView.bottomAnchor.constraint(equalTo: bottomView.bottomAnchor),
+            bottomGradientView.heightAnchor.constraint(equalTo: bottomView.heightAnchor)
+        ])
+    }
+    
+    func bottomGradientSetup() {
+        let gradientMask = CAGradientLayer()
+        gradientMask.frame = bottomGradientView.bounds
+        
+        gradientMask.colors = [
+            UIColor.black.withAlphaComponent(0.0).cgColor,
+            UIColor.black.withAlphaComponent(1.0).cgColor
+        ]
+        gradientMask.locations = [0.0, 1.0]
+        bottomGradientView.layer.mask = gradientMask
     }
     
     
@@ -122,16 +244,17 @@ class RequestsViewController: UIViewController {
     
     func requestsCounterSetup() {
         requestsCounter.translatesAutoresizingMaskIntoConstraints = false
-        requestsCounter.text = "\(remainingRequests)"
         requestsCounter.textColor = .label
         requestsCounter.textAlignment = .center
         requestsCounter.font = UIFont.systemFont(ofSize: 80, weight: .bold)
-        view.addSubview(requestsCounter)
         
+        view.addSubview(requestsCounter)
         NSLayoutConstraint.activate([
-            requestsCounter.topAnchor.constraint(equalTo: topTitle.bottomAnchor, constant: 50),
             requestsCounter.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
+        
+        requestsCounterTopConstraint = requestsCounter.topAnchor.constraint(equalTo: topTitle.bottomAnchor, constant: requestsCounterConstant)
+        requestsCounterTopConstraint.isActive = true
     }
     
     func requestsLabelSetup() {
@@ -140,12 +263,6 @@ class RequestsViewController: UIViewController {
         requestsLabel.textAlignment = .center
         requestsLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         
-        if remainingRequests == 1 {
-            requestsLabel.text = "request left for today"
-        } else {
-            requestsLabel.text = "requests left for today"
-        }
-        
         view.addSubview(requestsLabel)
         NSLayoutConstraint.activate([
             requestsLabel.topAnchor.constraint(equalTo: requestsCounter.bottomAnchor, constant: 10),
@@ -153,28 +270,85 @@ class RequestsViewController: UIViewController {
         ])
     }
     
-    func explanationLabelSetup() {
-        explanationLabel.translatesAutoresizingMaskIntoConstraints = false
-        explanationLabel.numberOfLines = 0
-        explanationLabel.textAlignment = .justified
-        explanationLabel.text = """
-            To keep Incognito AI free, we use GitHub's free developer access, which enforces daily message limits. Request limit reset every day!
-
-            
-            Advanced models use more power and have lower limits than lighter ones. If you run out of requests, simply switch to a different model.
-
-            
-            Sending messages too fast may trigger a temporary block from Ai model. If you get a "too fast" error, just wait a few seconds before trying again.
-            """
-        explanationLabel.textColor = .label
-        explanationLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        view.addSubview(explanationLabel)
+    func updateRequests() {
+        let remainingRequests = RequestLimitManager.shared.remainingRequestsToday()
+        requestsCounter.text = "\(remainingRequests)"
+        
+        if remainingRequests == 1 {
+            requestsLabel.text = "request left for today"
+        } else {
+            requestsLabel.text = "requests left for today"
+        }
+    }
+    
+    
+    //MARK: - Explanation
+    
+    func explanationScrollViewSetup() {
+        explanationScrollView.translatesAutoresizingMaskIntoConstraints = false
+        explanationScrollView.showsVerticalScrollIndicator = true
+        explanationScrollView.contentInset = .init(top: 32, left: 0, bottom: 32, right: 0)
+        explanationScrollView.scrollIndicatorInsets = .init(top: 22, left: 0, bottom: 22, right: 0)
+        view.addSubview(explanationScrollView)
+        
+        explanationStackView.translatesAutoresizingMaskIntoConstraints = false
+        explanationStackView.axis = .vertical
+        explanationStackView.spacing = 30
+        explanationStackView.alignment = .fill
+        explanationScrollView.addSubview(explanationStackView)
         
         NSLayoutConstraint.activate([
-            explanationLabel.topAnchor.constraint(equalTo: requestsLabel.bottomAnchor, constant: 60),
-            explanationLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40),
-            explanationLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40)
+            explanationScrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 2),
+            explanationScrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -2),
+            explanationScrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
+            
+            explanationStackView.topAnchor.constraint(equalTo: explanationScrollView.contentLayoutGuide.topAnchor),
+            explanationStackView.leadingAnchor.constraint(equalTo: explanationScrollView.contentLayoutGuide.leadingAnchor),
+            explanationStackView.trailingAnchor.constraint(equalTo: explanationScrollView.contentLayoutGuide.trailingAnchor),
+            explanationStackView.bottomAnchor.constraint(equalTo: explanationScrollView.contentLayoutGuide.bottomAnchor),
+            explanationStackView.widthAnchor.constraint(equalTo: explanationScrollView.frameLayoutGuide.widthAnchor)
         ])
+        
+        explanationTopConstraint = explanationScrollView.topAnchor.constraint(equalTo: requestsLabel.bottomAnchor, constant: explanationConstant)
+        explanationTopConstraint.isActive = true
+        
+        let text1 = "To keep Incognito AI free, we use GitHub's free developer access, which enforces daily message limits. This limit reset every day."
+        let text2 = "Advanced models have lower limits than lighter ones. If you run out of requests, simply switch to a different model."
+        let text3 = "Sending messages too fast may trigger a temporary block from AI model. Just wait a few seconds before trying again."
+        let texts = [text1, text2, text3]
+        let symbols = ["text.bubble.fill", "sparkles", "exclamationmark.triangle.fill"]
+        
+        for i in 0..<3 {
+            let rowStack = UIStackView()
+            rowStack.axis = .horizontal
+            rowStack.spacing = 15
+            rowStack.alignment = .center
+            
+            let imageView = UIImageView()
+            let config = UIImage.SymbolConfiguration(pointSize: 18, weight: .regular)
+            imageView.image = UIImage(systemName: symbols[i], withConfiguration: config)
+            imageView.tintColor = .label
+            imageView.contentMode = .center
+            
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            imageView.widthAnchor.constraint(equalToConstant: 30).isActive = true
+            imageView.setContentHuggingPriority(.required, for: .horizontal)
+            imageView.setContentCompressionResistancePriority(.required, for: .horizontal)
+            
+            let label = UILabel()
+            label.text = texts[i]
+            label.numberOfLines = 0
+            label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+            label.textColor = .label
+            label.textAlignment = .left
+            
+            rowStack.isLayoutMarginsRelativeArrangement = true
+            rowStack.layoutMargins = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 45)
+            rowStack.addArrangedSubview(imageView)
+            rowStack.addArrangedSubview(label)
+            
+            explanationStackView.addArrangedSubview(rowStack)
+        }
     }
     
     //MARK: - Close Button
