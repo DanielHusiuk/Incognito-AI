@@ -37,7 +37,7 @@ struct AiPickerModel {
                      image: UIImage(named: "openai")!,
                      model: "openai/gpt-4.1-mini",
                      requestsPerDay: 150,
-                     backgroundColor: [Color(#colorLiteral(red: 0.7568627451, green: 0.3725490196, blue: 0.2352941176, alpha: 1)), Color(#colorLiteral(red: 1, green: 0.4973989637, blue: 0.3172358688, alpha: 1)), Color(#colorLiteral(red: 0.7568627451, green: 0.3725490196, blue: 0.2352941176, alpha: 1)), Color(#colorLiteral(red: 1, green: 0.4973989637, blue: 0.3172358688, alpha: 1))],
+                     backgroundColor: [Color(#colorLiteral(red: 0.7568627451, green: 0.3725490196, blue: 0.2352941176, alpha: 1)), Color(#colorLiteral(red: 1, green: 0.4980392157, blue: 0.3176470588, alpha: 1)), Color(#colorLiteral(red: 0.7568627451, green: 0.3725490196, blue: 0.2352941176, alpha: 1)), Color(#colorLiteral(red: 1, green: 0.4973989637, blue: 0.3172358688, alpha: 1))],
                      tintColor: #colorLiteral(red: 0.7568627451, green: 0.3725490196, blue: 0.2352941176, alpha: 1),
                      action: { button in
                          didTapButton(button)
@@ -48,7 +48,7 @@ struct AiPickerModel {
                      image: UIImage(named: "meta")!,
                      model: "meta/Llama-4-Scout-17B-16E-Instruct",
                      requestsPerDay: 50,
-                     backgroundColor: [Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.5790046453, green: 0, blue: 0.8964880109, alpha: 1)), Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.5294117647, green: 0.09803921569, blue: 0.862745098, alpha: 1))],
+                     backgroundColor: [Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.5803921569, green: 0, blue: 0.8980392157, alpha: 1)), Color(#colorLiteral(red: 0.3753327245, green: 0.1084319534, blue: 0.5240490846, alpha: 1)), Color(#colorLiteral(red: 0.5294117647, green: 0.09803921569, blue: 0.862745098, alpha: 1))],
                      tintColor: #colorLiteral(red: 0.5790046453, green: 0, blue: 0.8964880109, alpha: 1),
                      action: { button in
                          didTapButton(button)
@@ -59,7 +59,7 @@ struct AiPickerModel {
                      image: UIImage(named: "grok")!,
                      model: "xai/grok-3-mini",
                      requestsPerDay: 30,
-                     backgroundColor: [Color(#colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.8600843549, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.8588235294, green: 0, blue: 0, alpha: 1))],
+                     backgroundColor: [Color(#colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.8588235294, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1)), Color(#colorLiteral(red: 0.8588235294, green: 0, blue: 0, alpha: 1))],
                      tintColor: #colorLiteral(red: 0.662745098, green: 0, blue: 0, alpha: 1),
                      action: { button in
                          didTapButton(button)

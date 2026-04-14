@@ -62,7 +62,7 @@ class RequestsButton: UIButton {
             self.backgroundColor = .clear
         })
         
-        if UserDefaults.standard.bool(forKey: "HapticState") {
+        if UserDefaults.standard.bool(forKey: "HapticSwitch") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
         UIApplication.shared.connectedScenes

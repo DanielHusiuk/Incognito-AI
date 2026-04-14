@@ -9,16 +9,18 @@ import SwiftUI
 
 struct AnimatedBackgroundView: View {
     @AppStorage("buttonId") private var selectedButtonId: Int = 0
+    @AppStorage("backgroundAnimationSwitch") private var isAnimationEnabled: Bool = true
     private var aiPickerModel = AiPickerModel()
     
     var body: some View {
-        AnimatedBackground(animationColors: aiPickerModel.buttons[selectedButtonId].backgroundColor)
+        AnimatedBackground(animationColors: aiPickerModel.buttons[selectedButtonId].backgroundColor, animationEnabled: isAnimationEnabled)
             .ignoresSafeArea()
     }
 }
 
 private struct AnimatedBackground: View {
     var animationColors: [Color]
+    var animationEnabled: Bool
     
     @State private var colorIndex: Int = 0
     @State private var isTopVisible: Bool = true
@@ -47,13 +49,23 @@ private struct AnimatedBackground: View {
         }
         .animation(.easeInOut(duration: 1.0), value: animationColors)
         .onReceive(colorTimer) { _ in
+            guard animationEnabled else { return }
             withAnimation(.easeInOut(duration: 5)) {
                 colorIndex = (colorIndex + 1) % max(1, animationColors.count)
             }
         }
         .onReceive(opacityTimer) { _ in
+            guard animationEnabled else { return }
             withAnimation(.easeInOut(duration: 1)) {
                 isTopVisible.toggle()
+            }
+        }
+        .onChange(of: animationEnabled) { newValue in
+            if newValue == false {
+                withTransaction(Transaction(animation: nil)) {
+                    colorIndex = 0
+                    isTopVisible = true
+                }
             }
         }
     }

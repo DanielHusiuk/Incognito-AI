@@ -34,7 +34,6 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     let hapticSwitch = UISwitch()
     let appLanguageButton = UIButton()
-
     
     override init(frame: CGRect, style: UITableView.Style) {
         super.init(frame: frame, style: .insetGrouped)
@@ -48,12 +47,47 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     // MARK: - Updates
     
+    override func tintColorDidChange() {
+        super.tintColorDidChange()
+        updateTintColor()
+    }
+    
     func updatePreferences() {
-        //update user preferences
+        keyboardOnLaunchSwitch.isOn = UserDefaults.standard.bool(forKey: "keyboardOnLaunchSwitch")
+        hideKeyboardSwitch.isOn = UserDefaults.standard.bool(forKey: "hideKeyboardSwitch")
+        
+        confirmChatSwitch.isOn = UserDefaults.standard.bool(forKey: "confirmChatSwitch")
+        
+        landscapeModeSwitch.isOn = UserDefaults.standard.bool(forKey: "landscapeModeSwitch")
+        backgroundAnimationSwitch.isOn = UserDefaults.standard.bool(forKey: "backgroundAnimationSwitch")
+        
+        hapticSwitch.isOn = UserDefaults.standard.bool(forKey: "hapticSwitch")
     }
     
     func resetPreferences() {
-        //reset user preferences
+        keyboardOnLaunchSwitch.isOn = false
+        UserDefaults.standard.set(false, forKey: "keyboardOnLaunchSwitch")
+        hideKeyboardSwitch.isOn = true
+        UserDefaults.standard.setValue(true, forKey: "hideKeyboardSwitch")
+        
+        confirmChatSwitch.isOn = false
+        UserDefaults.standard.setValue(false, forKey: "confirmChatSwitch")
+        
+        landscapeModeSwitch.isOn = false
+        UserDefaults.standard.setValue(false, forKey: "landscapeModeSwitch")
+        backgroundAnimationSwitch.isOn = true
+        UserDefaults.standard.setValue(true, forKey: "backgroundAnimationSwitch")
+        
+        hapticSwitch.isOn = true
+        UserDefaults.standard.setValue(true, forKey: "hapticSwitch")
+    }
+    
+    func updateTintColor() {
+        let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor")
+        let switches = [keyboardOnLaunchSwitch, hideKeyboardSwitch, confirmChatSwitch, landscapeModeSwitch, backgroundAnimationSwitch, hapticSwitch]
+        switches.forEach {
+            $0.onTintColor = selectedTintColor
+        }
     }
     
     
@@ -63,6 +97,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         delegate = self
         dataSource = self
         register(SettingsTableCell.self, forCellReuseIdentifier: "settingsCell")
+        updateTintColor()
         
         keyboardOnLaunchSwitch.tag = 100
         hideKeyboardSwitch.tag = 100
@@ -234,14 +269,19 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         tableView.deselectRow(at: indexPath, animated: true)
         
         switch indexPath.section {
+        case 1:
+            switch indexPath.row {
+            case 0:
+                swipeGesturesButton.sendActions(for: .touchUpInside)
+            default:
+                return
+            }
         case 2:
             switch indexPath.row {
             case 0:
-                print("appearance")
+                appearanceButton.sendActions(for: .primaryActionTriggered)
             case 1:
-                print("1")
-            case 3:
-                print("3")
+                accentColorButton.sendActions(for: .touchUpInside)
             default:
                 return
             }
@@ -262,7 +302,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
                 return
             }
         case 5:
-            developerGitAlert()
+            NotificationCenter.default.post(name: Notification.Name("showGitAlert"), object: nil)
         default:
             return
         }
@@ -359,9 +399,6 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     //MARK: - Keyboard Section
     
     func keyboardOnLaunchSwitch(in cell: UITableViewCell) {
-        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
-            keyboardOnLaunchSwitch.onTintColor = selectedTintColor
-        }
         keyboardOnLaunchSwitch.translatesAutoresizingMaskIntoConstraints = false
         keyboardOnLaunchSwitch.isOn = UserDefaults.standard.bool(forKey: "keyboardOnLaunchSwitchState")
         keyboardOnLaunchSwitch.addTarget(self, action: #selector(keyboardOnLaunchSwitchChanged(_:)), for: .valueChanged)
@@ -375,17 +412,16 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     @objc func keyboardOnLaunchSwitchChanged(_ sender: UISwitch) {
         if sender.isOn {
-            print("kol on")
+            UserDefaults.standard.set(true, forKey: "keyboardOnLaunchSwitch")
+            NotificationCenter.default.post(name: Notification.Name("keyboardOnLaunchNotification"), object: nil)
         } else {
-            print("kol off")
+            UserDefaults.standard.set(false, forKey: "keyboardOnLaunchSwitch")
+            NotificationCenter.default.post(name: Notification.Name("keyboardOnLaunchNotification"), object: nil)
         }
     }
     
     //
     func hideKeyboardSwitch(in cell: UITableViewCell) {
-        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
-            hideKeyboardSwitch.onTintColor = selectedTintColor
-        }
         hideKeyboardSwitch.translatesAutoresizingMaskIntoConstraints = false
         hideKeyboardSwitch.isOn = UserDefaults.standard.bool(forKey: "hideKeyboardSwitchState")
         hideKeyboardSwitch.addTarget(self, action: #selector(hideKeyboardSwitchChanged(_:)), for: .valueChanged)
@@ -399,9 +435,11 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     @objc func hideKeyboardSwitchChanged(_ sender: UISwitch) {
         if sender.isOn {
-            print("hkb on")
+            UserDefaults.standard.set(true, forKey: "hideKeyboardSwitch")
+            NotificationCenter.default.post(name: Notification.Name("hideKeyboardNotification"), object: nil)
         } else {
-            print("hkb off")
+            UserDefaults.standard.set(false, forKey: "hideKeyboardSwitch")
+            NotificationCenter.default.post(name: Notification.Name("hideKeyboardNotification"), object: nil)
         }
     }
     
@@ -411,6 +449,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     func swipeGesturesButton(in cell: UITableViewCell) {
         swipeGesturesButton.translatesAutoresizingMaskIntoConstraints = false
         swipeGesturesButton.isUserInteractionEnabled = false
+        swipeGesturesButton.showsMenuAsPrimaryAction = true
         
         var config = UIButton.Configuration.plain()
         var languageTitle = AttributedString("Left & Right")
@@ -423,6 +462,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
         swipeGesturesButton.configuration = config
+        swipeGesturesButton.addTarget(self, action: #selector(swipeGesturesButtonTouchUp), for: .touchUpInside)
 
         cell.contentView.addSubview(swipeGesturesButton)
         NSLayoutConstraint.activate([
@@ -431,10 +471,11 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         ])
     }
     
+    @objc func swipeGesturesButtonTouchUp() {
+        print("Ui menu")
+    }
+    
     func confirmChatSwitch(in cell: UITableViewCell) {
-        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
-            confirmChatSwitch.onTintColor = selectedTintColor
-        }
         confirmChatSwitch.translatesAutoresizingMaskIntoConstraints = false
         confirmChatSwitch.isOn = UserDefaults.standard.bool(forKey: "confirmChatSwitchState")
         confirmChatSwitch.addTarget(self, action: #selector(confirmChatSwitchChanged(_:)), for: .valueChanged)
@@ -448,18 +489,31 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     @objc func confirmChatSwitchChanged(_ sender: UISwitch) {
         if sender.isOn {
-            print("cnc on")
+            UserDefaults.standard.set(true, forKey: "confirmChatSwitch")
         } else {
-            print("cnc off")
+            UserDefaults.standard.set(false, forKey: "confirmChatSwitch")
         }
     }
     
     
     //MARK: - Customisation Section
     
+    var accentColorButtonMenuItems: [UIAction] {
+        return [
+            UIAction(title: "System", image: UIImage(systemName: "gear"), handler: {(_) in }),
+            UIAction(title: "Automatic", image: UIImage(systemName: "sparkle"), handler: {(_) in }),
+            UIAction(title: "Green", image: UIImage(named: "1.circle.fill"), handler: {(_) in }),
+            UIAction(title: "Orange", image: UIImage(named: "2.circle.fill"), handler: {(_) in }),
+            UIAction(title: "Purple", image: UIImage(named: "3.circle.fill"), handler: {(_) in }),
+            UIAction(title: "Red", image: UIImage(named: "4.circle.fill"), handler: {(_) in }),
+            UIAction(title: "Blue", image: UIImage(named: "5.circle.fill"), handler: {(_) in }),
+        ]
+    }
+    
     func appearanceButton(in cell: UITableViewCell) {
         appearanceButton.translatesAutoresizingMaskIntoConstraints = false
-        appearanceButton.isUserInteractionEnabled = false
+        appearanceButton.isUserInteractionEnabled = true
+        appearanceButton.showsMenuAsPrimaryAction = true
         
         var config = UIButton.Configuration.plain()
         var languageTitle = AttributedString("System")
@@ -471,7 +525,10 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePlacement = .trailing
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
+        
         appearanceButton.configuration = config
+        appearanceButton.addTarget(self, action: #selector(appearanceButtonTouchUp), for: .touchUpInside)
+        appearanceButton.menu = UIMenu(title: "Choose accent color:", options: .displayInline, children: accentColorButtonMenuItems)
 
         cell.contentView.addSubview(appearanceButton)
         NSLayoutConstraint.activate([
@@ -480,9 +537,14 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         ])
     }
     
+    @objc func appearanceButtonTouchUp() {
+        print("Ui menu2")
+    }
+    
     func accentColorButton(in cell: UITableViewCell) {
         accentColorButton.translatesAutoresizingMaskIntoConstraints = false
         accentColorButton.isUserInteractionEnabled = false
+        accentColorButton.showsMenuAsPrimaryAction = true
         
         var config = UIButton.Configuration.plain()
         var languageTitle = AttributedString("Model")
@@ -495,6 +557,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
         accentColorButton.configuration = config
+        accentColorButton.addTarget(self, action: #selector(accentColorButtonTouchUp), for: .touchUpInside)
 
         cell.contentView.addSubview(accentColorButton)
         NSLayoutConstraint.activate([
@@ -503,10 +566,11 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         ])
     }
     
+    @objc func accentColorButtonTouchUp() {
+        print("Ui menu3")
+    }
+    
     func landscapeModeSwitch(in cell: UITableViewCell) {
-        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
-            landscapeModeSwitch.onTintColor = selectedTintColor
-        }
         landscapeModeSwitch.translatesAutoresizingMaskIntoConstraints = false
         landscapeModeSwitch.isOn = UserDefaults.standard.bool(forKey: "landscapeModeSwitchState")
         landscapeModeSwitch.addTarget(self, action: #selector(landscapeModeSwitchChanged(_:)), for: .valueChanged)
@@ -520,17 +584,14 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     @objc func landscapeModeSwitchChanged(_ sender: UISwitch) {
         if sender.isOn {
-            print("lm on")
+            UserDefaults.standard.set(true, forKey: "landscapeModeSwitch")
         } else {
-            print("lm off")
+            UserDefaults.standard.set(false, forKey: "landscapeModeSwitch")
         }
     }
     
     //
     func backgroundAnimationSwitch(in cell: UITableViewCell) {
-        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
-            backgroundAnimationSwitch.onTintColor = selectedTintColor
-        }
         backgroundAnimationSwitch.translatesAutoresizingMaskIntoConstraints = false
         backgroundAnimationSwitch.isOn = UserDefaults.standard.bool(forKey: "landscapeModeSwitchState")
         backgroundAnimationSwitch.addTarget(self, action: #selector(backgroundAnimationSwitchChanged(_:)), for: .valueChanged)
@@ -544,9 +605,9 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     @objc func backgroundAnimationSwitchChanged(_ sender: UISwitch) {
         if sender.isOn {
-            print("ba on")
+            UserDefaults.standard.set(true, forKey: "backgroundAnimationSwitch")
         } else {
-            print("ba off")
+            UserDefaults.standard.set(false, forKey: "backgroundAnimationSwitch")
         }
     }
     
@@ -554,9 +615,6 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     //MARK: - Preferences Section
     
     func hapticSwitch(in cell: UITableViewCell) {
-        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
-            hapticSwitch.onTintColor = selectedTintColor
-        }
         hapticSwitch.translatesAutoresizingMaskIntoConstraints = false
         hapticSwitch.isOn = UserDefaults.standard.bool(forKey: "HapticSwitchState")
         hapticSwitch.addTarget(self, action: #selector(hapticSwitchChanged(_:)), for: .valueChanged)
@@ -570,9 +628,9 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     @objc func hapticSwitchChanged(_ sender: UISwitch) {
         if sender.isOn {
-            print("hf on")
+            UserDefaults.standard.set(true, forKey: "hapticSwitch")
         } else {
-            print("hf off")
+            UserDefaults.standard.set(false, forKey: "hapticSwitch")
         }
     }
     
@@ -614,25 +672,6 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
             chevronImage.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: chevronTrailingConstant),
             chevronImage.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
-    }
-    
-    
-    //MARK: - Author Section
-    
-    func developerGitAlert() {
-        let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor")
-        let gitAlert = UIAlertController(title: "Open developer's Git Hub?", message: "https://github.com/DanielHusiuk", preferredStyle: .alert)
-        gitAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        let confirmAction = UIAlertAction(title: "Confirm", style: .default, handler: { [weak self] (action: UIAlertAction!) in
-            guard self != nil else { return }
-            
-            if let gitURL = URL(string: "https://github.com/DanielHusiuk") {
-                UIApplication.shared.open(gitURL, options: [:], completionHandler: nil)
-            }
-        })
-        confirmAction.setValue(selectedTintColor, forKey: "titleTextColor")
-        gitAlert.addAction(confirmAction)
-        //        self.present(gitAlert, animated: true, completion: nil)
     }
     
 }

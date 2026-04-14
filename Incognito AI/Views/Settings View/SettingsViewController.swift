@@ -40,6 +40,7 @@ class SettingsViewController: UIViewController {
         titleSetup()
         closeSettingsButtonSetup()
         resetSettingsButtonSetup()
+        loadNotifications()
     }
     
     override func viewDidLayoutSubviews() {
@@ -47,6 +48,7 @@ class SettingsViewController: UIViewController {
         backgroundGradientSetup()
         navigationGradientSetup()
         bottomGradientSetup()
+        settingsTableView.updatePreferences()
         
         ShadowManager().applyShadow(to: closeSettingsButton, opacity: 0.1, shadowRadius: 10, viewBounds: closeSettingsButton.bounds.insetBy(dx: 0, dy: 3))
         ShadowManager().applyShadow(to: resetSettingsButton, opacity: 0.1, shadowRadius: 10, viewBounds: resetSettingsButton.bounds.insetBy(dx: 0, dy: 3))
@@ -57,6 +59,10 @@ class SettingsViewController: UIViewController {
         if previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle {
             backgroundView.layer.borderColor = UIColor.sheetBorder.cgColor
         }
+    }
+    
+    func loadNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(showGitAlert), name: Notification.Name(rawValue: "showGitAlert"), object: nil)
     }
     
     
@@ -289,7 +295,19 @@ class SettingsViewController: UIViewController {
         UIView.animate(withDuration: 0.1, animations: {
             self.resetSettingsButton.alpha = 1
         })
-        dismiss(animated: true)
+        
+        let resetAlert = UIAlertController(title: "Reset Settings?", message: "This will reset all settings parameters to default. This action cannot be undone.", preferredStyle: .alert)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        resetAlert.addAction(cancelAction)
+        resetAlert.addAction(UIAlertAction(title: "Reset", style: .destructive, handler: { [weak self] (action: UIAlertAction!) in
+            self?.settingsTableView.resetPreferences()
+            UIView.transition(with: self!.settingsTableView, duration: 0.15, options: .transitionCrossDissolve, animations: {self!.settingsTableView.reloadData()}, completion: nil)
+        }))
+        present(resetAlert, animated: true, completion: nil)
+        
+        if UserDefaults.standard.bool(forKey: "HapticSwitch") {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
     }
     
     
@@ -313,6 +331,20 @@ class SettingsViewController: UIViewController {
             settingsTableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 2),
             settingsTableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -2)
         ])
+    }
+    
+    @objc func showGitAlert() {
+        let gitAlert = UIAlertController(title: "Open developer's GitHub?", message: "https://github.com/DanielHusiuk", preferredStyle: .alert)
+        gitAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        let confirmAction = UIAlertAction(title: "Confirm", style: .default, handler: { [weak self] (action: UIAlertAction!) in
+            guard self != nil else { return }
+            
+            if let gitURL = URL(string: "https://github.com/DanielHusiuk") {
+                UIApplication.shared.open(gitURL, options: [:], completionHandler: nil)
+            }
+        })
+        gitAlert.addAction(confirmAction)
+        present(gitAlert, animated: true, completion: nil)
     }
     
 }

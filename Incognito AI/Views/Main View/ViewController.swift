@@ -123,9 +123,11 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     //MARK: - Load Views
     
     func loadUserDefaults() {
-        UserDefaults.standard.set(true, forKey: "HapticState")
-        UserDefaults.standard.set(false, forKey: "isEditing")
+        if UserDefaults.standard.bool(forKey: "keyboardOnLaunchSwitch") {
+            fieldText.becomeFirstResponder()
+        }
         
+        UserDefaults.standard.set(false, forKey: "isEditing")
         if UserDefaults.standard.value(forKey: "buttonId") == nil {
             if let defaultButton = aiPickerModel.buttons.first {
                 UserDefaults.standard.set(defaultButton.id, forKey: "buttonId")
@@ -176,6 +178,8 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     func loadNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(self.handleButtonTap), name: Notification.Name("pickerButtonTapped"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(self.handleDismissKeyboard), name: Notification.Name("hideKeyboardNotification"), object: nil)
     }
     
     func loadShadows() {
@@ -580,13 +584,24 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             self.newChatButton.isHighlighted = false
         })
         
-        messagesCollectionView.performBatchUpdates({
-            let sections = IndexSet(integersIn: 0..<self.messagesCollectionView.messages.count)
+        if UserDefaults.standard.bool(forKey: "confirmChatSwitch") == true {
+            let resetAlert = UIAlertController(title: "Create new chat?", message: "Confirm to create new chat. All your previous messages will be deleted.", preferredStyle: .alert)
+            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+            resetAlert.addAction(cancelAction)
+            resetAlert.addAction(UIAlertAction(title: "Confirm", style: .destructive, handler: { [weak self] (action: UIAlertAction!) in
+                self!.messagesCollectionView.messages.removeAll()
+                self!.messagesCollectionView.reloadData()
+                if UserDefaults.standard.bool(forKey: "hapticSwitch") {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }
+            }))
+            present(resetAlert, animated: true, completion: nil)
+        } else {
             messagesCollectionView.messages.removeAll()
-            messagesCollectionView.deleteSections(sections)
-        })
+            messagesCollectionView.reloadData()
+        }
         
-        if UserDefaults.standard.bool(forKey: "HapticState") {
+        if UserDefaults.standard.bool(forKey: "hapticSwitch") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
     }
@@ -855,7 +870,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         })
         AnimationManager().animateLabelWithBottomSlide(view: fieldPlaceholder, duration: 0.15)
         
-        if UserDefaults.standard.bool(forKey: "HapticState") {
+        if UserDefaults.standard.bool(forKey: "hapticSwitch") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
     }
@@ -1246,7 +1261,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         }
         
         AnimationManager().animateLabelWithTopSlide(view: fieldPlaceholder, duration: 0.15)
-        if UserDefaults.standard.bool(forKey: "HapticState") {
+        if UserDefaults.standard.bool(forKey: "hapticSwitch") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
     }
@@ -1343,6 +1358,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         dismissKeyboardButton.tintColor = .systemGray2
         dismissKeyboardButton.backgroundColor = .systemGray6
         dismissKeyboardButton.layer.cornerRadius = 17.5
+        dismissKeyboardButton.isHidden = !UserDefaults.standard.bool(forKey: "hideKeyboardSwitch")
         dismissKeyboardButton.alpha = 0
         dismissKeyboardButton.transform = .init(scaleX: 0.1, y: 0.1)
         
@@ -1357,6 +1373,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             dismissKeyboardButton.heightAnchor.constraint(equalToConstant: 35),
             dismissKeyboardButton.widthAnchor.constraint(equalToConstant: 35)
         ])
+    }
+    
+    @objc func handleDismissKeyboard() {
+        dismissKeyboardButton.isHidden = !UserDefaults.standard.bool(forKey: "hideKeyboardSwitch")
     }
     
     @objc func dismissKeyboardDown(_ sender: UIButton) {
