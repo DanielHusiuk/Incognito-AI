@@ -269,22 +269,6 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         tableView.deselectRow(at: indexPath, animated: true)
         
         switch indexPath.section {
-        case 1:
-            switch indexPath.row {
-            case 0:
-                swipeGesturesButton.sendActions(for: .touchUpInside)
-            default:
-                return
-            }
-        case 2:
-            switch indexPath.row {
-            case 0:
-                appearanceButton.sendActions(for: .primaryActionTriggered)
-            case 1:
-                accentColorButton.sendActions(for: .touchUpInside)
-            default:
-                return
-            }
         case 3:
             switch indexPath.row {
             case 1:
@@ -295,9 +279,9 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         case 4:
             switch indexPath.row {
             case 0:
-                print("send feedback")
+                NotificationCenter.default.post(name: Notification.Name("sendFeedback"), object: nil)
             case 1:
-                print("report a bug")
+                NotificationCenter.default.post(name: Notification.Name("reportBug"), object: nil)
             default:
                 return
             }
@@ -446,6 +430,19 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     //MARK: - Productivity Section
     
+    var swipeGesturesButtonMenuItem0 = UIAction(title: "None", image: UIImage(systemName: "xmark"), handler: { _ in
+        UserDefaults.standard.set(0, forKey: "swipeGestureOption")
+    })
+    var swipeGesturesButtonMenuItem1 = UIAction(title: "Left & Right", image: UIImage(systemName: "arrow.left.arrow.right"), state: .on, handler: { _ in
+        UserDefaults.standard.set(1, forKey: "swipeGestureOption")
+    })
+    var swipeGesturesButtonMenuItem2 = UIAction(title: "Only Left", image: UIImage(systemName: "arrow.left"), handler: { _ in
+        UserDefaults.standard.set(2, forKey: "swipeGestureOption")
+    })
+    var swipeGesturesButtonMenuItem3 = UIAction(title: "Only Right", image: UIImage(systemName: "arrow.right"), handler: { _ in
+        UserDefaults.standard.set(3, forKey: "swipeGestureOption")
+    })
+    
     func swipeGesturesButton(in cell: UITableViewCell) {
         swipeGesturesButton.translatesAutoresizingMaskIntoConstraints = false
         swipeGesturesButton.isUserInteractionEnabled = false
@@ -463,12 +460,37 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.baseForegroundColor = .cellAccessory
         swipeGesturesButton.configuration = config
         swipeGesturesButton.addTarget(self, action: #selector(swipeGesturesButtonTouchUp), for: .touchUpInside)
-
+        
         cell.contentView.addSubview(swipeGesturesButton)
         NSLayoutConstraint.activate([
             swipeGesturesButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
             swipeGesturesButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
+        
+        let swipesMenu = UIMenu(title: "Choose swipe gestures:", options: .singleSelection, children: [
+            UIMenu(title: "", options: .displayInline, children: [swipeGesturesButtonMenuItem0]),
+            swipeGesturesButtonMenuItem1,
+            swipeGesturesButtonMenuItem2,
+            swipeGesturesButtonMenuItem3
+        ])
+        
+        let invisibleMenuTrigger = CellButtonManager(type: .custom)
+        invisibleMenuTrigger.translatesAutoresizingMaskIntoConstraints = false
+        invisibleMenuTrigger.showsMenuAsPrimaryAction = true
+        invisibleMenuTrigger.menu = swipesMenu
+        
+        cell.contentView.addSubview(invisibleMenuTrigger)
+        NSLayoutConstraint.activate([
+            invisibleMenuTrigger.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -8),
+            invisibleMenuTrigger.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+            invisibleMenuTrigger.widthAnchor.constraint(equalToConstant: 44),
+            invisibleMenuTrigger.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        
+        invisibleMenuTrigger.onHighlightChanged = {[weak self] isHighlighted in
+            let targetAlpha: CGFloat = isHighlighted ? 0.5 : 1.0
+            self?.swipeGesturesButton.alpha = targetAlpha
+        }
     }
     
     @objc func swipeGesturesButtonTouchUp() {
@@ -498,22 +520,19 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     //MARK: - Customisation Section
     
-    var accentColorButtonMenuItems: [UIAction] {
-        return [
-            UIAction(title: "System", image: UIImage(systemName: "gear"), handler: {(_) in }),
-            UIAction(title: "Automatic", image: UIImage(systemName: "sparkle"), handler: {(_) in }),
-            UIAction(title: "Green", image: UIImage(named: "1.circle.fill"), handler: {(_) in }),
-            UIAction(title: "Orange", image: UIImage(named: "2.circle.fill"), handler: {(_) in }),
-            UIAction(title: "Purple", image: UIImage(named: "3.circle.fill"), handler: {(_) in }),
-            UIAction(title: "Red", image: UIImage(named: "4.circle.fill"), handler: {(_) in }),
-            UIAction(title: "Blue", image: UIImage(named: "5.circle.fill"), handler: {(_) in }),
-        ]
-    }
+    var appearanceButtonMenuItem0 = UIAction(title: "System", image: UIImage(systemName: "gear"), state: .on, handler: { _ in
+        UserDefaults.standard.set(0, forKey: "appearanceOption")
+    })
+    var appearanceButtonMenuItem1 = UIAction(title: "Light", image: UIImage(systemName: "sun.max"), handler: { _ in
+        UserDefaults.standard.set(1, forKey: "appearanceOption")
+    })
+    var appearanceButtonMenuItem2 = UIAction(title: "Dark", image: UIImage(systemName: "moon"), handler: { _ in
+        UserDefaults.standard.set(2, forKey: "appearanceOption")
+    })
     
     func appearanceButton(in cell: UITableViewCell) {
         appearanceButton.translatesAutoresizingMaskIntoConstraints = false
-        appearanceButton.isUserInteractionEnabled = true
-        appearanceButton.showsMenuAsPrimaryAction = true
+        appearanceButton.isUserInteractionEnabled = false
         
         var config = UIButton.Configuration.plain()
         var languageTitle = AttributedString("System")
@@ -525,29 +544,67 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePlacement = .trailing
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
-        
         appearanceButton.configuration = config
-        appearanceButton.addTarget(self, action: #selector(appearanceButtonTouchUp), for: .touchUpInside)
-        appearanceButton.menu = UIMenu(title: "Choose accent color:", options: .displayInline, children: accentColorButtonMenuItems)
-
+        
         cell.contentView.addSubview(appearanceButton)
         NSLayoutConstraint.activate([
             appearanceButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
             appearanceButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
+        
+        let appearanceMenu = UIMenu(title: "Choose app appearance:", options: .singleSelection, children: [
+            UIMenu(title: "", options: .displayInline, children: [appearanceButtonMenuItem0]),
+            appearanceButtonMenuItem1,
+            appearanceButtonMenuItem2
+        ])
+        
+        let invisibleMenuTrigger = CellButtonManager(type: .custom)
+        invisibleMenuTrigger.translatesAutoresizingMaskIntoConstraints = false
+        invisibleMenuTrigger.showsMenuAsPrimaryAction = true
+        invisibleMenuTrigger.menu = appearanceMenu
+        
+        cell.contentView.addSubview(invisibleMenuTrigger)
+        NSLayoutConstraint.activate([
+            invisibleMenuTrigger.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -8),
+            invisibleMenuTrigger.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+            invisibleMenuTrigger.widthAnchor.constraint(equalToConstant: 44),
+            invisibleMenuTrigger.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        
+        invisibleMenuTrigger.onHighlightChanged = {[weak self] isHighlighted in
+            let targetAlpha: CGFloat = isHighlighted ? 0.5 : 1.0
+            self?.appearanceButton.alpha = targetAlpha
+        }
     }
     
-    @objc func appearanceButtonTouchUp() {
-        print("Ui menu2")
-    }
+    var accentColorButtonMenuItem0 = UIAction(title: "System", image: UIImage(systemName: "gear"), handler: { _ in
+        UserDefaults.standard.set(0, forKey: "accentColorOption")
+    })
+    var accentColorButtonMenuItem1 = UIAction(title: "Automatic", image: UIImage(systemName: "sparkle"), state: .on, handler: { _ in
+        UserDefaults.standard.set(1, forKey: "accentColorOption")
+    })
+    var accentColorButtonMenuItem2 = UIAction(title: "Green", image: UIImage(named: "1.circle.fill"), handler: { _ in
+        UserDefaults.standard.set(2, forKey: "accentColorOption")
+    })
+    var accentColorButtonMenuItem3 = UIAction(title: "Orange", image: UIImage(named: "2.circle.fill"), handler: { _ in
+        UserDefaults.standard.set(3, forKey: "accentColorOption")
+    })
+    var accentColorButtonMenuItem4 = UIAction(title: "Purple", image: UIImage(named: "3.circle.fill"), handler: { _ in
+        UserDefaults.standard.set(4, forKey: "accentColorOption")
+    })
+    var accentColorButtonMenuItem5 = UIAction(title: "Red", image: UIImage(named: "4.circle.fill"), handler: { _ in
+        UserDefaults.standard.set(5, forKey: "accentColorOption")
+    })
+    var accentColorButtonMenuItem6 = UIAction(title: "Blue", image: UIImage(named: "5.circle.fill"), handler: { _ in
+        UserDefaults.standard.set(6, forKey: "accentColorOption")
+    })
     
     func accentColorButton(in cell: UITableViewCell) {
         accentColorButton.translatesAutoresizingMaskIntoConstraints = false
         accentColorButton.isUserInteractionEnabled = false
-        accentColorButton.showsMenuAsPrimaryAction = true
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString("Model")
+        var languageTitle = AttributedString("Automatic")
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
@@ -557,17 +614,39 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
         accentColorButton.configuration = config
-        accentColorButton.addTarget(self, action: #selector(accentColorButtonTouchUp), for: .touchUpInside)
-
+                
         cell.contentView.addSubview(accentColorButton)
         NSLayoutConstraint.activate([
-            accentColorButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
-            accentColorButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+            accentColorButton.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -8),
+            accentColorButton.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor)
         ])
-    }
-    
-    @objc func accentColorButtonTouchUp() {
-        print("Ui menu3")
+        
+        let colorMenu = UIMenu(title: "Choose accent color:", options: .singleSelection, children: [
+            UIMenu(title: "", options: .displayInline, children: [accentColorButtonMenuItem0, accentColorButtonMenuItem1]),
+            accentColorButtonMenuItem2,
+            accentColorButtonMenuItem3,
+            accentColorButtonMenuItem4,
+            accentColorButtonMenuItem5,
+            accentColorButtonMenuItem6
+        ])
+        
+        let invisibleMenuTrigger = CellButtonManager(type: .custom)
+        invisibleMenuTrigger.translatesAutoresizingMaskIntoConstraints = false
+        invisibleMenuTrigger.showsMenuAsPrimaryAction = true
+        invisibleMenuTrigger.menu = colorMenu
+        
+        cell.contentView.addSubview(invisibleMenuTrigger)
+        NSLayoutConstraint.activate([
+            invisibleMenuTrigger.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -8),
+            invisibleMenuTrigger.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor),
+            invisibleMenuTrigger.widthAnchor.constraint(equalToConstant: 44),
+            invisibleMenuTrigger.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        
+        invisibleMenuTrigger.onHighlightChanged = {[weak self] isHighlighted in
+            let targetAlpha: CGFloat = isHighlighted ? 0.5 : 1.0
+            self?.accentColorButton.alpha = targetAlpha
+        }
     }
     
     func landscapeModeSwitch(in cell: UITableViewCell) {
@@ -649,7 +728,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
         appLanguageButton.configuration = config
-
+        
         cell.contentView.addSubview(appLanguageButton)
         NSLayoutConstraint.activate([
             appLanguageButton.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),

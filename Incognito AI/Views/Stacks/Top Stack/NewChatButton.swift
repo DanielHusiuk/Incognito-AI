@@ -18,7 +18,7 @@ class NewChatButton: UIButton {
         super.init(coder: coder)
         buttonSetup()
     }
-
+    
     func buttonSetup() {
         translatesAutoresizingMaskIntoConstraints = false
         imageView?.contentMode = .scaleAspectFit
@@ -27,5 +27,5 @@ class NewChatButton: UIButton {
         tintColor = .white
         layer.cornerRadius = 25
     }
-
+    
 }

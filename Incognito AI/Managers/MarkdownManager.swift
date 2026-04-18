@@ -47,7 +47,7 @@ struct MarkdownManager {
                 mutableString.deleteCharacters(in: NSRange(location: mutableString.mutableString.length - 1, length: 1))
             }
             
-           return mutableString
+            return mutableString
         } catch {
             return fallback(text: text, color: textColor)
         }

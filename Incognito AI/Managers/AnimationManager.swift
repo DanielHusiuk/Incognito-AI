@@ -9,7 +9,7 @@ import UIKit
 
 class AnimationManager {
     
-
+    
     func animateTextWithTopSlide(label: UITextView, newText: String, duration: TimeInterval) {
         let transform = CGAffineTransform(translationX: 0, y: -12)
         UIView.animate(withDuration: duration, animations: {

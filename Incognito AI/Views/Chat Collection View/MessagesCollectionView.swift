@@ -144,7 +144,7 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICo
                 self.onResend?(resendText)
             }
             
-            let newConversation = UIAction(title: "Start new conversation with this message", image: UIImage(systemName: "text.bubble")) { _ in
+            let newConversation = UIAction(title: "Start new chat with this message", image: UIImage(systemName: "text.bubble")) { _ in
                 let resendText = self.messages[indexPath.section].content
                 self.onNewConversation?(resendText)
             }

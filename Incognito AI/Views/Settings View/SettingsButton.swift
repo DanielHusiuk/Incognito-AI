@@ -20,7 +20,7 @@ class SettingsButton: UIButton {
         super.init(coder: coder)
         buttonSetup()
     }
-
+    
     func buttonSetup() {
         translatesAutoresizingMaskIntoConstraints = false
         imageView?.contentMode = .scaleAspectFit
@@ -54,5 +54,5 @@ class SettingsButton: UIButton {
             .first?.rootViewController?
             .present(navigateToSettings, animated: true)
     }
-
+    
 }

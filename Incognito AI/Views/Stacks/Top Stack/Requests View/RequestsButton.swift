@@ -8,7 +8,7 @@
 import UIKit
 
 class RequestsButton: UIButton {
-
+    
     let navigateToRequests = UINavigationController(rootViewController: RequestsViewController())
     
     override init(frame: CGRect) {
@@ -70,5 +70,5 @@ class RequestsButton: UIButton {
             .first?.rootViewController?
             .present(navigateToRequests, animated: true)
     }
-
+    
 }

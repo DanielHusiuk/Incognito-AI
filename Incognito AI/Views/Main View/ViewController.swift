@@ -44,6 +44,13 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     let dismissKeyboardButton: UIButton = .init(frame: .zero)
     let scrollDownButton = ScrollDownButton()
     
+    let welcomeCenterStack: UIStackView = .init(frame: .zero)
+    let welcomeTextStack: UIStackView = .init(frame: .zero)
+    let welcomeLabel: UILabel = .init(frame: .zero)
+    let welcomeDescription: UILabel = .init(frame: .zero)
+    let welcomeButtonStack: UIStackView = .init(frame: .zero)
+    var welcomeButtons: [UIButton] = []
+    
     let apiManager = ApiManager()
     let messagesCollectionView = MessagesCollectionView()
     private var topBlurHostingController: UIViewController?
@@ -68,6 +75,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         loadTopView()
         loadBottomView()
+        loadWelcomeView()
         
         loadUserDefaults()
         loadNotifications()
@@ -80,6 +88,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             aiButton.layer.borderColor = UIColor.systemGray5.cgColor
             fieldView.layer.borderColor = UIColor.systemGray5.cgColor
             aiPickerView.layer.borderColor = UIColor.systemGray5.cgColor
+            
+            for button in welcomeButtons {
+                button.layer.borderColor = UIColor.systemGray5.cgColor
+            }
         }
         checkScreenOrientation()
     }
@@ -175,10 +187,19 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         scrollDownButtonSetup()
     }
     
+    func loadWelcomeView() {
+        welcomeCenterStackSetup()
+        welcomeTextStackSetup()
+        welcomeLabelSetup()
+        welcomeDescriptionSetup()
+        
+        welcomeButtonStackSetup()
+        welcomeButtonsSetup()
+    }
+    
     func loadNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(self.handleButtonTap), name: Notification.Name("pickerButtonTapped"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
-        
         NotificationCenter.default.addObserver(self, selector: #selector(self.handleDismissKeyboard), name: Notification.Name("hideKeyboardNotification"), object: nil)
     }
     
@@ -193,6 +214,13 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         ShadowManager().applyShadow(to: dismissKeyboardButton, opacity: 0.1, shadowRadius: 10, viewBounds: sendButton.bounds.insetBy(dx: 0, dy: 5))
         ShadowManager().applyShadow(to: scrollDownButton, opacity: 0.1, shadowRadius: 10, viewBounds: sendButton.bounds.insetBy(dx: 0, dy: 5))
+        
+        ShadowManager().applyShadow(to: welcomeLabel, opacity: 0.05, shadowRadius: 10, viewBounds: welcomeLabel.bounds)
+        ShadowManager().applyShadow(to: welcomeDescription, opacity: 0.05, shadowRadius: 10, viewBounds: welcomeDescription.bounds)
+        
+        for button in welcomeButtons {
+            ShadowManager().applyShadow(to: button, opacity: 0.2, shadowRadius: 10, viewBounds: button.bounds.insetBy(dx: 0, dy: 5))
+        }
     }
     
     func collectionViewLayout() {
@@ -212,9 +240,11 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                 resizeTextView(fieldText)
                 collectionViewLayout()
                 messagesCollectionView.layoutIfNeeded()
+                welcomeCenterStack.alpha = 1
             } else {
                 resizeTextView(fieldText)
                 messagesCollectionView.layoutIfNeeded()
+                welcomeCenterStack.alpha = 0
             }
         }
     }
@@ -236,6 +266,127 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+    
+    func welcomeCenterStackSetup() {
+        welcomeCenterStack.translatesAutoresizingMaskIntoConstraints = false
+        welcomeCenterStack.axis = .vertical
+        welcomeCenterStack.distribution = .fill
+        welcomeCenterStack.alignment = .center
+        welcomeCenterStack.spacing = 40
+        welcomeCenterStack.alpha = 1
+        
+        view.addSubview(welcomeCenterStack)
+        NSLayoutConstraint.activate([
+            welcomeCenterStack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
+            welcomeCenterStack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+            welcomeCenterStack.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+    
+    func updateWelcomeStack() {
+        let hasMessages = messagesCollectionView.messages.count > 0
+        let shouldHide = hasMessages || fieldText.isEditing
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            self.welcomeCenterStack.alpha = shouldHide ? 0 : 1
+        })
+    }
+    
+    func welcomeTextStackSetup() {
+        welcomeTextStack.translatesAutoresizingMaskIntoConstraints = false
+        welcomeTextStack.axis = .vertical
+        welcomeTextStack.distribution = .fill
+        welcomeTextStack.alignment = .center
+        welcomeCenterStack.addArrangedSubview(welcomeTextStack)
+    }
+    
+    func welcomeLabelSetup() {
+        welcomeLabel.text = "Incognito AI"
+        welcomeLabel.textColor = .white
+        welcomeLabel.textAlignment = .center
+        welcomeLabel.font = UIFont.systemFont(ofSize: 32, weight: .heavy)
+        welcomeLabel.translatesAutoresizingMaskIntoConstraints = false
+        welcomeTextStack.addArrangedSubview(welcomeLabel)
+    }
+    
+    func welcomeDescriptionSetup() {
+        welcomeDescription.text = "Where should we start?"
+        welcomeDescription.textColor = .lightText
+        welcomeDescription.textAlignment = .center
+        welcomeDescription.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        welcomeDescription.translatesAutoresizingMaskIntoConstraints = false
+        welcomeTextStack.addArrangedSubview(welcomeDescription)
+    }
+    
+    let welcomeButtonTitle: [String] = [
+        "What this app can do?",
+        "Which AI models are available?",
+        "Why is there a daily request limit?"
+    ]
+    
+    func welcomeButtonStackSetup() {
+        welcomeButtonStack.translatesAutoresizingMaskIntoConstraints = false
+        welcomeButtonStack.axis = .horizontal
+        welcomeButtonStack.distribution = .fillEqually
+        welcomeButtonStack.spacing = 15
+        welcomeCenterStack.addArrangedSubview(welcomeButtonStack)
+    }
+    
+    func welcomeButtonsSetup() {
+        for title in welcomeButtonTitle {
+            let button = UIButton(type: .system)
+            button.tintColor = .label
+            button.backgroundColor = .systemGray6
+            button.layer.borderColor = UIColor.systemGray5.cgColor
+            button.layer.borderWidth = 2
+            button.layer.cornerRadius = 16
+            button.translatesAutoresizingMaskIntoConstraints = false
+            button.contentHorizontalAlignment = .center
+            
+            var config = UIButton.Configuration.plain()
+            config.attributedTitle = AttributedString(title)
+            config.contentInsets = .init(top: 10, leading: 9, bottom: 10, trailing: 9)
+            config.titleAlignment = .center
+            
+            var textAttributes = AttributeContainer()
+            textAttributes.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+            textAttributes.merge(.init([.paragraphStyle: paragraphStyle]))
+            config.attributedTitle = AttributedString(title, attributes: textAttributes)
+            
+            button.configuration = config
+            welcomeButtonStack.addArrangedSubview(button)
+            welcomeButtons.append(button)
+            
+            button.addTarget(self, action: #selector(welcomeButtonTouchDown), for: [.touchDown, .touchDragEnter, .touchDownRepeat])
+            button.addTarget(self, action: #selector(welcomeButtonTouchCancel), for: [.touchCancel, .touchDragExit, .touchUpOutside])
+            button.addTarget(self, action: #selector(welcomeButtonTouchUp), for: [.touchUpInside])
+        }
+    }
+    
+    @objc func welcomeButtonTouchDown(button: UIButton) {
+        button.backgroundColor = .systemGray3
+        button.layer.borderColor = UIColor.systemGray2.cgColor
+    }
+    
+    @objc func welcomeButtonTouchCancel(button: UIButton) {
+        UIView.animate(withDuration: 0.1, animations: {
+            button.backgroundColor = .systemGray6
+            button.layer.borderColor = UIColor.systemGray5.cgColor
+        })
+    }
+    
+    @objc func welcomeButtonTouchUp(button: UIButton) {
+        UIView.animate(withDuration: 0.1, animations: {
+            button.backgroundColor = .systemGray6
+            button.layer.borderColor = UIColor.systemGray5.cgColor
+        })
+        
+        pendingSendText = button.configuration?.title
+        sendButton.sendActions(for: .touchUpInside)
+        updateWelcomeStack()
     }
     
     
@@ -583,6 +734,14 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         UIView.animate(withDuration: 0.1, animations: {
             self.newChatButton.isHighlighted = false
         })
+        guard messagesCollectionView.messages.count > 0 else {
+            let notificationAlert = UIAlertController(title: "Unable to create new chat", message: "Chat already empty", preferredStyle: .alert)
+            let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+            notificationAlert.addAction(okAction)
+            
+            present(notificationAlert, animated: true, completion: nil)
+            return
+        }
         
         if UserDefaults.standard.bool(forKey: "confirmChatSwitch") == true {
             let resetAlert = UIAlertController(title: "Create new chat?", message: "Confirm to create new chat. All your previous messages will be deleted.", preferredStyle: .alert)
@@ -591,6 +750,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             resetAlert.addAction(UIAlertAction(title: "Confirm", style: .destructive, handler: { [weak self] (action: UIAlertAction!) in
                 self!.messagesCollectionView.messages.removeAll()
                 self!.messagesCollectionView.reloadData()
+                self!.updateWelcomeStack()
                 if UserDefaults.standard.bool(forKey: "hapticSwitch") {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 }
@@ -599,6 +759,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         } else {
             messagesCollectionView.messages.removeAll()
             messagesCollectionView.reloadData()
+            updateWelcomeStack()
         }
         
         if UserDefaults.standard.bool(forKey: "hapticSwitch") {
@@ -704,6 +865,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         checkFieldPlaceholder()
         checkDismissButton()
         checkEraseButton()
+        updateWelcomeStack()
     }
     
     func textViewDidEndEditing(_ textView: UITextView) {
@@ -722,6 +884,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         checkFieldPlaceholder()
         checkDismissButton()
         checkEraseButton()
+        updateWelcomeStack()
     }
     
     func resizeTextView(_ textView: UITextView) {
@@ -941,14 +1104,14 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     private var aiPickerTimer: Timer?
-
+    
     private func startAiPickerTimer() {
         aiPickerTimer?.invalidate()
         aiPickerTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
             self?.closeAiPickerView()
         }
     }
-
+    
     private func stopAiPickerTimer() {
         aiPickerTimer?.invalidate()
         aiPickerTimer = nil
@@ -976,7 +1139,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             self.aiPickerView.isHidden = true
         }
     }
-
+    
     
     
     //MARK: - AI Picker View
@@ -1087,6 +1250,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             messagesCollectionView.messages.removeAll()
             messagesCollectionView.deleteSections(sections)
         })
+        updateWelcomeStack()
         
         //center label
         AnimationManager().animateLabelWithBottomSlide(view: self.centerLabel, duration: 0.15)
@@ -1179,10 +1343,11 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             AnimationManager().animateTextWithTopSlide(label: fieldText, newText: "", duration: 0.15)
             fieldText.endEditing(true)
             UserDefaults.standard.set(false, forKey: "isEditing")
+            updateWelcomeStack()
             
             apiManager.loadData { [weak self] successMessage, errorMessage in
                 guard let self = self else { return }
-               
+                
                 if let error = errorMessage {
                     self.userNotification(title: "Error", message: error)
                     self.loadingIndicator.stopAnimating()

@@ -34,9 +34,9 @@ final class RequestLimitManager {
     }
     
     func registerRequest() {
-         let key = todayKey()
-         defaults.set(requestsToday() + 1, forKey: key)
-     }
+        let key = todayKey()
+        defaults.set(requestsToday() + 1, forKey: key)
+    }
     
     func remainingRequestsToday() -> Int {
         max(0, dailyLimit - requestsToday())

@@ -7,8 +7,9 @@
 
 import UIKit
 import SwiftUI
+import MessageUI
 
-class SettingsViewController: UIViewController {
+class SettingsViewController: UIViewController, MFMailComposeViewControllerDelegate {
     
     let backgroundView: UIView! = .init(frame: .zero)
     let backgroundGradientView: UIView! = .init(frame: .zero)
@@ -63,6 +64,8 @@ class SettingsViewController: UIViewController {
     
     func loadNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(showGitAlert), name: Notification.Name(rawValue: "showGitAlert"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(sendFeedbackEmail), name: Notification.Name(rawValue: "sendFeedback"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(sendReportBugEmail), name: Notification.Name(rawValue: "reportBug"), object: nil)
     }
     
     
@@ -345,6 +348,78 @@ class SettingsViewController: UIViewController {
         })
         gitAlert.addAction(confirmAction)
         present(gitAlert, animated: true, completion: nil)
+    }
+    
+    func networkErrorAlert() {
+        let networkAlert = UIAlertController(title: "No internet connection", message: "Please check your internet connection.", preferredStyle: .alert)
+        networkAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(networkAlert, animated: true, completion: nil)
+    }
+    
+    @objc func sendFeedbackEmail() {
+        guard MFMailComposeViewController.canSendMail() else {
+            networkErrorAlert()
+            return
+        }
+        
+        let mailView = MFMailComposeViewController()
+        mailView.mailComposeDelegate = self
+        mailView.setToRecipients(["danielhusiuk@gmail.com"])
+        mailView.setSubject("Incognito AI app - Feedback")
+        
+        let mailBody = """
+                Hello,
+            
+                I would like to share the following feedback about Incognito AI app:
+            
+                ------------------------
+                
+                (Write your message here)
+            
+                ------------------------
+            
+            App Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "N/A")
+            iOS Version: \(UIDevice.current.systemVersion)
+            Device: \(UIDevice.current.model)
+            """
+        
+        mailView.setMessageBody(mailBody, isHTML: false)
+        present(mailView, animated: true, completion: nil)
+    }
+    
+    @objc func sendReportBugEmail() {
+        guard MFMailComposeViewController.canSendMail() else {
+            networkErrorAlert()
+            return
+        }
+        
+        let mailView = MFMailComposeViewController()
+        mailView.mailComposeDelegate = self
+        mailView.setToRecipients(["danielhusiuk@gmail.com"])
+        mailView.setSubject("Incognito AI app - Bug Report")
+        
+        let mailBody = """
+                Hello,
+            
+                I would like to share the following bug report about Incognito AI app:
+            
+                ------------------------
+                
+                (Describe bug here)
+            
+                ------------------------
+            
+            App Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "N/A")
+            iOS Version: \(UIDevice.current.systemVersion)
+            Device: \(UIDevice.current.model)
+            """
+        
+        mailView.setMessageBody(mailBody, isHTML: false)
+        present(mailView, animated: true)
+    }
+    
+    func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: (any Error)?) {
+        controller.dismiss(animated: true)
     }
     
 }

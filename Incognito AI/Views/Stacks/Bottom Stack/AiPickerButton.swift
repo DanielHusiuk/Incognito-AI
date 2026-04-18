@@ -65,7 +65,7 @@ class AiPickerButton: UIButton {
         if let model = model {
             action?(model)
         }
-
+        
         if UserDefaults.standard.bool(forKey: "HapticSwitch") {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }

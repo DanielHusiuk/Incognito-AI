@@ -8,7 +8,7 @@
 import UIKit
 
 class AiButton: UIButton {
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         buttonSetup()
@@ -31,5 +31,5 @@ class AiButton: UIButton {
         layer.cornerRadius = 25
         transform = CGAffineTransform(rotationAngle: .pi * 2)
     }
-
+    
 }

@@ -8,7 +8,7 @@
 import UIKit
 
 class CenterLabel: UILabel {
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         labelSetup()
@@ -26,5 +26,5 @@ class CenterLabel: UILabel {
         font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         translatesAutoresizingMaskIntoConstraints = false
     }
-
+    
 }

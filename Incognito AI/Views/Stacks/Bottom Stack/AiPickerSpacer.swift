@@ -8,9 +8,9 @@
 import UIKit
 
 class AiPickerSpacer: UIView {
-
+    
     let aiPickerSpacer = UIView()
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         spacerSetup()
@@ -31,5 +31,5 @@ class AiPickerSpacer: UIView {
             heightAnchor.constraint(equalToConstant: 1)
         ])
     }
-
+    
 }

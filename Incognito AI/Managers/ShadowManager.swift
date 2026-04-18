@@ -14,6 +14,5 @@ class ShadowManager {
         view.layer.shadowOpacity = opacity
         view.layer.shadowRadius = shadowRadius
         view.layer.shadowPath = UIBezierPath(roundedRect: viewBounds, cornerRadius: view.layer.cornerRadius).cgPath
-  
     }
 }
