@@ -86,3 +86,48 @@ func didTapButton(_ button: PickerButton) {
     UserDefaults.standard.setColor(button.tintColor, forKey: "buttonTintColor")
     NotificationCenter.default.post(name: Notification.Name("pickerButtonTapped"), object: button)
 }
+
+
+//MARK: - Extensions
+
+extension AiPickerModel {
+    static func resolveAppTintColor() -> UIColor {
+        let accentOption = UserDefaults.standard.integer(forKey: "accentColorOption")
+        let model = AiPickerModel()
+        
+        if accentOption == 0 {
+            let aiModelId = UserDefaults.standard.integer(forKey: "buttonId")
+            
+            guard aiModelId >= 0 && aiModelId < model.buttons.count else {
+                return model.buttons[0].tintColor
+            }
+            return model.buttons[aiModelId].tintColor
+        } else {
+            let colorIndex = accentOption - 1
+            
+            guard colorIndex >= 0 && colorIndex < model.buttons.count else {
+                return model.buttons[0].tintColor
+            }
+            return model.buttons[colorIndex].tintColor
+        }
+    }
+    
+    static func resolveBackgroundColor(accentOption: Int, aiModelId: Int) -> [Color] {
+        let model = AiPickerModel()
+        
+        if accentOption == 0 {
+            guard aiModelId >= 0 && aiModelId < model.buttons.count else {
+                return model.buttons[0].backgroundColor
+            }
+            return model.buttons[aiModelId].backgroundColor
+        } else {
+            let colorIndex = accentOption - 1
+            
+            guard colorIndex >= 0 && colorIndex < model.buttons.count else {
+                return model.buttons[0].backgroundColor
+            }
+            return model.buttons[colorIndex].backgroundColor
+        }
+    }
+}
+

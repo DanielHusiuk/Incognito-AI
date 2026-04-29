@@ -6,63 +6,29 @@
 //
 
 import UIKit
+import MarkdownKit
 
 struct MarkdownManager {
     
     static func format(text: String, isUser: Bool) -> NSAttributedString {
         let textColor: UIColor = .label
+        let font = UIFont.systemFont(ofSize: 16)
         
-        do {
-            var options = AttributedString.MarkdownParsingOptions()
-            options.interpretedSyntax = isUser ? .inlineOnlyPreservingWhitespace : .full
-            options.failurePolicy = .returnPartiallyParsedIfPossible
-            
-            let attrString = try AttributedString(markdown: text, options: options)
-            let nsAttrString = try NSAttributedString(attrString, including: \.uiKit)
-            
-            let mutableString = NSMutableAttributedString(attributedString: nsAttrString)
-            let fullRange = NSRange(location: 0, length: mutableString.length)
-            
-            mutableString.addAttribute(.foregroundColor, value: textColor, range: fullRange)
-            mutableString.enumerateAttribute(.font, in: fullRange, options: []) { value, range, _ in
-                if let oldFont = value as? UIFont {
-                    let newFont = UIFont(descriptor: oldFont.fontDescriptor, size: 16)
-                    mutableString.addAttribute(.font, value: newFont, range: range)
-                } else {
-                    mutableString.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: range)
-                }
-            }
-            
-            mutableString.enumerateAttribute(.paragraphStyle, in: fullRange, options: []) { value, range, _ in
-                let style = (value as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
-                style.lineSpacing = 4
-                style.paragraphSpacing = 4
-                mutableString.addAttribute(.paragraphStyle, value: style, range: range)
-            }
-            
-            while mutableString.length > 0 {
-                let lastChar = mutableString.mutableString.character(at: mutableString.length - 1)
-                
-                guard let scalar = UnicodeScalar(lastChar), CharacterSet.whitespacesAndNewlines.contains(scalar) else { break }
-                mutableString.deleteCharacters(in: NSRange(location: mutableString.mutableString.length - 1, length: 1))
-            }
-            
-            return mutableString
-        } catch {
-            return fallback(text: text, color: textColor)
-        }
-    }
-    
-    private static func fallback(text: String, color: UIColor) -> NSAttributedString {
-        let style = NSMutableParagraphStyle()
-        style.lineSpacing = 4
-        style.paragraphSpacing = 4
+        let parser = MarkdownParser(font: font, color: textColor)
+        parser.code.textBackgroundColor = .systemGray6
+        parser.code.color = .black
+        parser.link.color = .systemBlue
+        parser.quote.color = .systemGray
         
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 16),
-            .foregroundColor: color,
-            .paragraphStyle: style
-        ]
-        return NSAttributedString(string: text, attributes: attributes)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 4
+        paragraphStyle.paragraphSpacing = 6
+        
+        let parsedString = parser.parse(text)
+        let mutableString = NSMutableAttributedString(attributedString: parsedString)
+        let fullRange = NSRange(location: 0, length: mutableString.length)
+        mutableString.addAttribute(.paragraphStyle, value: paragraphStyle, range: fullRange)
+        
+        return mutableString
     }
 }

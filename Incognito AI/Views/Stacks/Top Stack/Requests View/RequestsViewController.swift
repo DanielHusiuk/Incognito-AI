@@ -102,17 +102,20 @@ class RequestsViewController: UIViewController {
         backgroundView.isUserInteractionEnabled = false
         backgroundView.backgroundColor = .systemBackground
         backgroundView.clipsToBounds = true
-        backgroundView.layer.cornerRadius = 30
-        backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        backgroundView.layer.borderColor = UIColor.systemGray5.cgColor
-        backgroundView.layer.borderWidth = 2
+        
+        if #unavailable(iOS 26) {
+            backgroundView.layer.cornerRadius = 30
+            backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+            backgroundView.layer.borderColor = UIColor.sheetBorder.cgColor
+            backgroundView.layer.borderWidth = 2
+        }
         view.addSubview(backgroundView)
         
         NSLayoutConstraint.activate([
             backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 2),
-            backgroundView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            backgroundView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+            backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
     
@@ -275,9 +278,9 @@ class RequestsViewController: UIViewController {
         requestsCounter.text = "\(remainingRequests)"
         
         if remainingRequests == 1 {
-            requestsLabel.text = "request left for today"
+            requestsLabel.text = NSLocalizedString("request left for today", comment: "")
         } else {
-            requestsLabel.text = "requests left for today"
+            requestsLabel.text = NSLocalizedString("requests left for today", comment: "")
         }
     }
     
@@ -312,9 +315,9 @@ class RequestsViewController: UIViewController {
         explanationTopConstraint = explanationScrollView.topAnchor.constraint(equalTo: requestsLabel.bottomAnchor, constant: explanationConstant)
         explanationTopConstraint.isActive = true
         
-        let text1 = "To keep Incognito AI free, we use GitHub's free developer access, which enforces daily message limits. This limit reset every day."
-        let text2 = "Advanced models have lower limits than lighter ones. If you run out of requests, simply switch to a different model."
-        let text3 = "Sending messages too fast may trigger a temporary block from AI model. Just wait a few seconds before trying again."
+        let text1 = NSLocalizedString("To keep Incognito AI free, we use GitHub's free developer access, which enforces daily message limits. This limit reset every day.", comment: "")
+        let text2 = NSLocalizedString("Advanced models have lower limits than lighter ones. If you run out of requests, simply switch to a different model.", comment: "")
+        let text3 = NSLocalizedString("Sending messages too fast may trigger a temporary block from AI model. Just wait a few seconds before trying again.", comment: "")
         let texts = [text1, text2, text3]
         let symbols = ["text.bubble.fill", "sparkles", "exclamationmark.triangle.fill"]
         
@@ -355,7 +358,7 @@ class RequestsViewController: UIViewController {
     
     func closeButtonSetup() {
         closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.setTitle("Got it!", for: .normal)
+        closeButton.setTitle(NSLocalizedString("Got it!", comment: ""), for: .normal)
         closeButton.setTitleColor(.white, for: .normal)
         closeButton.titleLabel?.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
         closeButton.titleLabel?.textAlignment = .center
@@ -377,7 +380,7 @@ class RequestsViewController: UIViewController {
     }
     
     func updateButtonColor(button: UIButton) {
-        if let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor") {
+        let selectedTintColor = AiPickerModel.resolveAppTintColor()
             button.backgroundColor = selectedTintColor
             
             var borderRedColor: CGFloat = 0,
@@ -398,7 +401,6 @@ class RequestsViewController: UIViewController {
                 blue: borderBlueColor * 0.8,
                 alpha: borderAlpha * 0.6
             ).cgColor
-        }
     }
     
     @objc func closeButtonTouchDown() {

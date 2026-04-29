@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		654CB6942FA1028C0096E46C /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = 654CB6932FA1028C0096E46C /* MarkdownKit */; };
 		6555BDCC2F44B0C500524402 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 6555BDCB2F44B0C500524402 /* Settings.bundle */; };
 /* End PBXBuildFile section */
 
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				654CB6942FA1028C0096E46C /* MarkdownKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +86,7 @@
 			);
 			name = "Incognito AI";
 			packageProductDependencies = (
+				654CB6932FA1028C0096E46C /* MarkdownKit */,
 			);
 			productName = "Incognito AI";
 			productReference = 650B30032E72E95C000CBAD3 /* Incognito AI.app */;
@@ -110,9 +113,14 @@
 			knownRegions = (
 				en,
 				Base,
+				uk,
+				it,
 			);
 			mainGroup = 650B2FFA2E72E95C000CBAD3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				654CB6922FA1028C0096E46C /* XCRemoteSwiftPackageReference "MarkdownKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 650B30042E72E95C000CBAD3 /* Products */;
 			projectDirPath = "";
@@ -150,6 +158,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SVFF6W5Y6W;
@@ -170,6 +179,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.danielhusiuk.Incognito-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -181,6 +191,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SVFF6W5Y6W;
@@ -201,6 +212,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.danielhusiuk.Incognito-AI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -268,6 +280,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -326,6 +339,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -352,6 +366,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		654CB6922FA1028C0096E46C /* XCRemoteSwiftPackageReference "MarkdownKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/bmoliveira/MarkdownKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		654CB6932FA1028C0096E46C /* MarkdownKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 654CB6922FA1028C0096E46C /* XCRemoteSwiftPackageReference "MarkdownKit" */;
+			productName = MarkdownKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 650B2FFB2E72E95C000CBAD3 /* Project object */;
 }

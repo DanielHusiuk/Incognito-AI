@@ -39,12 +39,15 @@ class RequestsButton: UIButton {
     
     @objc func refresh() {
         let remainingRequests = RequestLimitManager.shared.remainingRequestsToday()
+        let remainingRequestString = NSLocalizedString("request left for today", comment: "")
+        let remainingRequestsString = NSLocalizedString("requests left for today", comment: "")
         
         if remainingRequests == 1 {
-            setTitle("\(remainingRequests) request left for today", for: .normal)
+            setTitle("\(remainingRequests) \(remainingRequestString)", for: .normal)
         } else {
-            setTitle("\(remainingRequests) requests left for today", for: .normal)
+            setTitle("\(remainingRequests) \(remainingRequestsString)", for: .normal)
         }
+        
     }
     
     @objc func requestsButtonTouchDown() {

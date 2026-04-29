@@ -135,16 +135,16 @@ class MessagesCollectionView: UICollectionView, UICollectionViewDataSource, UICo
     
     func configureContextMenu(indexPath: IndexPath) -> UIContextMenuConfiguration {
         return UIContextMenuConfiguration(identifier: indexPath as NSCopying, previewProvider: nil) { _ in
-            let copy = UIAction(title: "Copy", image: UIImage(systemName: "doc.on.doc")) { _ in
+            let copy = UIAction(title: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc")) { _ in
                 UIPasteboard.general.string = self.messages[indexPath.section].content
             }
             
-            let resend = UIAction(title: "Resend", image: UIImage(systemName: "arrow.counterclockwise")) { _ in
+            let resend = UIAction(title: NSLocalizedString("Resend", comment: ""), image: UIImage(systemName: "arrow.counterclockwise")) { _ in
                 let resendText = self.messages[indexPath.section].content
                 self.onResend?(resendText)
             }
             
-            let newConversation = UIAction(title: "Start new chat with this message", image: UIImage(systemName: "text.bubble")) { _ in
+            let newConversation = UIAction(title: NSLocalizedString("Start new chat with this message", comment: ""), image: UIImage(systemName: "text.bubble")) { _ in
                 let resendText = self.messages[indexPath.section].content
                 self.onNewConversation?(resendText)
             }

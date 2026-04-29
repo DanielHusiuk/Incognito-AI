@@ -18,7 +18,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let _ = (scene as? UIWindowScene) else { return }
         NotificationCenter.default.addObserver(self, selector: #selector(updateSystemTintColor), name: Notification.Name("tintColorChanged"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateSystemAppearance), name: Notification.Name("appearanceChanged"), object: nil)
         updateSystemTintColor()
+        updateSystemAppearance()
     }
     
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -50,10 +52,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     @objc func updateSystemTintColor() {
-        let savedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor")
-        window?.tintColor = savedTintColor
+        window?.tintColor = AiPickerModel.resolveAppTintColor()
     }
     
+    @objc func updateSystemAppearance() {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .forEach { $0.overrideUserInterfaceStyle = .init(rawValue: UserDefaults.standard.integer(forKey: "appearanceOption")) ?? .unspecified }
+    }
     
 }
 

@@ -8,12 +8,14 @@
 import SwiftUI
 
 struct AnimatedBackgroundView: View {
+    @AppStorage("accentColorOption") private var accentColorOption: Int = 0
     @AppStorage("buttonId") private var selectedButtonId: Int = 0
     @AppStorage("backgroundAnimationSwitch") private var isAnimationEnabled: Bool = true
-    private var aiPickerModel = AiPickerModel()
     
     var body: some View {
-        AnimatedBackground(animationColors: aiPickerModel.buttons[selectedButtonId].backgroundColor, animationEnabled: isAnimationEnabled)
+        let selectedBackgroundColor = AiPickerModel.resolveBackgroundColor(accentOption: accentColorOption, aiModelId: selectedButtonId)
+        
+        AnimatedBackground(animationColors: selectedBackgroundColor, animationEnabled: isAnimationEnabled)
             .ignoresSafeArea()
     }
 }

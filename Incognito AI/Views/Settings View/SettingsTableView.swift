@@ -52,7 +52,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         updateTintColor()
     }
     
-    func updatePreferences() {
+    func updateSettingsPreferences() {
         keyboardOnLaunchSwitch.isOn = UserDefaults.standard.bool(forKey: "keyboardOnLaunchSwitch")
         hideKeyboardSwitch.isOn = UserDefaults.standard.bool(forKey: "hideKeyboardSwitch")
         
@@ -64,29 +64,10 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         hapticSwitch.isOn = UserDefaults.standard.bool(forKey: "hapticSwitch")
     }
     
-    func resetPreferences() {
-        keyboardOnLaunchSwitch.isOn = false
-        UserDefaults.standard.set(false, forKey: "keyboardOnLaunchSwitch")
-        hideKeyboardSwitch.isOn = true
-        UserDefaults.standard.setValue(true, forKey: "hideKeyboardSwitch")
-        
-        confirmChatSwitch.isOn = false
-        UserDefaults.standard.setValue(false, forKey: "confirmChatSwitch")
-        
-        landscapeModeSwitch.isOn = false
-        UserDefaults.standard.setValue(false, forKey: "landscapeModeSwitch")
-        backgroundAnimationSwitch.isOn = true
-        UserDefaults.standard.setValue(true, forKey: "backgroundAnimationSwitch")
-        
-        hapticSwitch.isOn = true
-        UserDefaults.standard.setValue(true, forKey: "hapticSwitch")
-    }
-    
     func updateTintColor() {
-        let selectedTintColor = UserDefaults.standard.color(forKey: "buttonTintColor")
         let switches = [keyboardOnLaunchSwitch, hideKeyboardSwitch, confirmChatSwitch, landscapeModeSwitch, backgroundAnimationSwitch, hapticSwitch]
         switches.forEach {
-            $0.onTintColor = selectedTintColor
+            $0.onTintColor = AiPickerModel.resolveAppTintColor()
         }
     }
     
@@ -97,6 +78,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         delegate = self
         dataSource = self
         register(SettingsTableCell.self, forCellReuseIdentifier: "settingsCell")
+        updateSettingsPreferences()
         updateTintColor()
         
         keyboardOnLaunchSwitch.tag = 100
@@ -294,37 +276,19 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
         switch indexPath.section {
-        case 0:
-            return false
-        case 1:
-            switch indexPath.row {
-            case 0:
-                return true
-            case 1:
-                return false
-            default:
-                return true
-            }
-        case 2:
-            switch indexPath.row {
-            case 0, 1:
-                return true
-            case 2, 3:
-                return false
-            default:
-                return true
-            }
         case 3:
             switch indexPath.row {
-            case 0:
-                return false
             case 1:
                 return true
             default:
-                return true
+                return false
             }
-        default:
+        case 4:
             return true
+        case 5:
+            return true
+        default:
+            return false
         }
     }
     
@@ -384,7 +348,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     func keyboardOnLaunchSwitch(in cell: UITableViewCell) {
         keyboardOnLaunchSwitch.translatesAutoresizingMaskIntoConstraints = false
-        keyboardOnLaunchSwitch.isOn = UserDefaults.standard.bool(forKey: "keyboardOnLaunchSwitchState")
+        keyboardOnLaunchSwitch.isOn = UserDefaults.standard.bool(forKey: "keyboardOnLaunchSwitch")
         keyboardOnLaunchSwitch.addTarget(self, action: #selector(keyboardOnLaunchSwitchChanged(_:)), for: .valueChanged)
         
         cell.addSubview(keyboardOnLaunchSwitch)
@@ -395,19 +359,14 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     }
     
     @objc func keyboardOnLaunchSwitchChanged(_ sender: UISwitch) {
-        if sender.isOn {
-            UserDefaults.standard.set(true, forKey: "keyboardOnLaunchSwitch")
-            NotificationCenter.default.post(name: Notification.Name("keyboardOnLaunchNotification"), object: nil)
-        } else {
-            UserDefaults.standard.set(false, forKey: "keyboardOnLaunchSwitch")
-            NotificationCenter.default.post(name: Notification.Name("keyboardOnLaunchNotification"), object: nil)
-        }
+        UserDefaults.standard.set(sender.isOn, forKey: "keyboardOnLaunchSwitch")
+        NotificationCenter.default.post(name: Notification.Name("keyboardOnLaunchNotification"), object: nil)
     }
     
     //
     func hideKeyboardSwitch(in cell: UITableViewCell) {
         hideKeyboardSwitch.translatesAutoresizingMaskIntoConstraints = false
-        hideKeyboardSwitch.isOn = UserDefaults.standard.bool(forKey: "hideKeyboardSwitchState")
+        hideKeyboardSwitch.isOn = UserDefaults.standard.bool(forKey: "hideKeyboardSwitch")
         hideKeyboardSwitch.addTarget(self, action: #selector(hideKeyboardSwitchChanged(_:)), for: .valueChanged)
         
         cell.addSubview(hideKeyboardSwitch)
@@ -418,30 +377,21 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     }
     
     @objc func hideKeyboardSwitchChanged(_ sender: UISwitch) {
-        if sender.isOn {
-            UserDefaults.standard.set(true, forKey: "hideKeyboardSwitch")
-            NotificationCenter.default.post(name: Notification.Name("hideKeyboardNotification"), object: nil)
-        } else {
-            UserDefaults.standard.set(false, forKey: "hideKeyboardSwitch")
-            NotificationCenter.default.post(name: Notification.Name("hideKeyboardNotification"), object: nil)
-        }
+        UserDefaults.standard.set(sender.isOn, forKey: "hideKeyboardSwitch")
+        NotificationCenter.default.post(name: Notification.Name("hideKeyboardNotification"), object: nil)
     }
     
     
     //MARK: - Productivity Section
     
-    var swipeGesturesButtonMenuItem0 = UIAction(title: "None", image: UIImage(systemName: "xmark"), handler: { _ in
-        UserDefaults.standard.set(0, forKey: "swipeGestureOption")
-    })
-    var swipeGesturesButtonMenuItem1 = UIAction(title: "Left & Right", image: UIImage(systemName: "arrow.left.arrow.right"), state: .on, handler: { _ in
-        UserDefaults.standard.set(1, forKey: "swipeGestureOption")
-    })
-    var swipeGesturesButtonMenuItem2 = UIAction(title: "Only Left", image: UIImage(systemName: "arrow.left"), handler: { _ in
-        UserDefaults.standard.set(2, forKey: "swipeGestureOption")
-    })
-    var swipeGesturesButtonMenuItem3 = UIAction(title: "Only Right", image: UIImage(systemName: "arrow.right"), handler: { _ in
-        UserDefaults.standard.set(3, forKey: "swipeGestureOption")
-    })
+    private func handleSwipeGestureChange(option: Int, title: String) {
+        UserDefaults.standard.set(option, forKey: "swipeGestureOption")
+        UserDefaults.standard.set(title, forKey: "swipeGestureString")
+        UserDefaults.standard.set(option, forKey: "swipeGestureActionState")
+        
+        NotificationCenter.default.post(name: Notification.Name("swipeGestureChanged"), object: nil)
+        swipeGesturesButton.setNeedsUpdateConfiguration()
+    }
     
     func swipeGesturesButton(in cell: UITableViewCell) {
         swipeGesturesButton.translatesAutoresizingMaskIntoConstraints = false
@@ -449,7 +399,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         swipeGesturesButton.showsMenuAsPrimaryAction = true
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString("Left & Right")
+        var languageTitle = AttributedString(UserDefaults.standard.string(forKey: "swipeGestureString") ?? NSLocalizedString("Left & Right", comment: ""))
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
@@ -458,8 +408,14 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePlacement = .trailing
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
+        
+        swipeGesturesButton.configurationUpdateHandler = { button in
+            var currentConfig = button.configuration ?? UIButton.Configuration.plain()
+            currentConfig.attributedTitle = AttributedString(UserDefaults.standard.string(forKey: "swipeGestureString") ?? NSLocalizedString("Left & Right", comment: ""))
+            currentConfig.attributedTitle?.font = .systemFont(ofSize: 16, weight: .medium)
+            button.configuration = currentConfig
+        }
         swipeGesturesButton.configuration = config
-        swipeGesturesButton.addTarget(self, action: #selector(swipeGesturesButtonTouchUp), for: .touchUpInside)
         
         cell.contentView.addSubview(swipeGesturesButton)
         NSLayoutConstraint.activate([
@@ -467,16 +423,39 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
             swipeGesturesButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
         
-        let swipesMenu = UIMenu(title: "Choose swipe gestures:", options: .singleSelection, children: [
-            UIMenu(title: "", options: .displayInline, children: [swipeGesturesButtonMenuItem0]),
-            swipeGesturesButtonMenuItem1,
-            swipeGesturesButtonMenuItem2,
-            swipeGesturesButtonMenuItem3
+        let currentState = UserDefaults.standard.integer(forKey: "swipeGestureActionState")
+        let action0 = UIAction(title: NSLocalizedString("None", comment: ""),
+                               image: UIImage(systemName: "xmark"),
+                               state: currentState == 0 ? .on : .off) { [weak self] _ in
+            self?.handleSwipeGestureChange(option: 0, title: NSLocalizedString("None", comment: ""))
+        }
+        let action1 = UIAction(title: NSLocalizedString("Left & Right", comment: ""),
+                               image: UIImage(systemName: "arrow.left.arrow.right"),
+                               state: currentState == 1 ? .on : .off) { [weak self] _ in
+            self?.handleSwipeGestureChange(option: 1, title: NSLocalizedString("Left & Right", comment: ""))
+        }
+        let action2 = UIAction(title: NSLocalizedString("Only Left", comment: ""),
+                               image: UIImage(systemName: "arrow.left"),
+                               state: currentState == 2 ? .on : .off) { [weak self] _ in
+            self?.handleSwipeGestureChange(option: 2, title: NSLocalizedString("Only Left", comment: ""))
+        }
+        let action3 = UIAction(title: NSLocalizedString("Only Right", comment: ""),
+                               image: UIImage(systemName: "arrow.right"),
+                               state: currentState == 3 ? .on : .off) { [weak self] _ in
+            self?.handleSwipeGestureChange(option: 3, title: NSLocalizedString("Only Right", comment: ""))
+        }
+        
+        let swipesMenu = UIMenu(title: NSLocalizedString("Choose swipe gestures:", comment: ""), options: .singleSelection, children: [
+            UIMenu(title: "", options: .displayInline, children: [action0]),
+            action1,
+            action2,
+            action3
         ])
         
         let invisibleMenuTrigger = CellButtonManager(type: .custom)
         invisibleMenuTrigger.translatesAutoresizingMaskIntoConstraints = false
         invisibleMenuTrigger.showsMenuAsPrimaryAction = true
+        invisibleMenuTrigger.tag = 100
         invisibleMenuTrigger.menu = swipesMenu
         
         cell.contentView.addSubview(invisibleMenuTrigger)
@@ -493,13 +472,9 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         }
     }
     
-    @objc func swipeGesturesButtonTouchUp() {
-        print("Ui menu")
-    }
-    
     func confirmChatSwitch(in cell: UITableViewCell) {
         confirmChatSwitch.translatesAutoresizingMaskIntoConstraints = false
-        confirmChatSwitch.isOn = UserDefaults.standard.bool(forKey: "confirmChatSwitchState")
+        confirmChatSwitch.isOn = UserDefaults.standard.bool(forKey: "confirmChatSwitch")
         confirmChatSwitch.addTarget(self, action: #selector(confirmChatSwitchChanged(_:)), for: .valueChanged)
         
         cell.addSubview(confirmChatSwitch)
@@ -510,32 +485,27 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     }
     
     @objc func confirmChatSwitchChanged(_ sender: UISwitch) {
-        if sender.isOn {
-            UserDefaults.standard.set(true, forKey: "confirmChatSwitch")
-        } else {
-            UserDefaults.standard.set(false, forKey: "confirmChatSwitch")
-        }
+        UserDefaults.standard.set(sender.isOn, forKey: "confirmChatSwitch")
     }
     
     
     //MARK: - Customisation Section
     
-    var appearanceButtonMenuItem0 = UIAction(title: "System", image: UIImage(systemName: "gear"), state: .on, handler: { _ in
-        UserDefaults.standard.set(0, forKey: "appearanceOption")
-    })
-    var appearanceButtonMenuItem1 = UIAction(title: "Light", image: UIImage(systemName: "sun.max"), handler: { _ in
-        UserDefaults.standard.set(1, forKey: "appearanceOption")
-    })
-    var appearanceButtonMenuItem2 = UIAction(title: "Dark", image: UIImage(systemName: "moon"), handler: { _ in
-        UserDefaults.standard.set(2, forKey: "appearanceOption")
-    })
+    private func handleAppearanceChange(option: Int, title: String) {
+        UserDefaults.standard.set(option, forKey: "appearanceOption")
+        UserDefaults.standard.set(title, forKey: "appearanceString")
+        UserDefaults.standard.set(option, forKey: "appearanceActionState")
+        
+        NotificationCenter.default.post(name: Notification.Name("appearanceChanged"), object: nil)
+        appearanceButton.setNeedsUpdateConfiguration()
+    }
     
     func appearanceButton(in cell: UITableViewCell) {
         appearanceButton.translatesAutoresizingMaskIntoConstraints = false
         appearanceButton.isUserInteractionEnabled = false
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString("System")
+        var languageTitle = AttributedString(UserDefaults.standard.string(forKey: "appearanceString") ?? NSLocalizedString("System", comment: ""))
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
@@ -544,6 +514,13 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePlacement = .trailing
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
+        
+        appearanceButton.configurationUpdateHandler = { button in
+            var currentConfig = button.configuration ?? UIButton.Configuration.plain()
+            currentConfig.attributedTitle = AttributedString(UserDefaults.standard.string(forKey: "appearanceString") ?? NSLocalizedString("System", comment: ""))
+            currentConfig.attributedTitle?.font = .systemFont(ofSize: 16, weight: .medium)
+            button.configuration = currentConfig
+        }
         appearanceButton.configuration = config
         
         cell.contentView.addSubview(appearanceButton)
@@ -552,15 +529,33 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
             appearanceButton.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
         
-        let appearanceMenu = UIMenu(title: "Choose app appearance:", options: .singleSelection, children: [
-            UIMenu(title: "", options: .displayInline, children: [appearanceButtonMenuItem0]),
-            appearanceButtonMenuItem1,
-            appearanceButtonMenuItem2
+        let currentState = UserDefaults.standard.integer(forKey: "appearanceActionState")
+        let action0 = UIAction(title: NSLocalizedString("System", comment: ""),
+                               image: UIImage(systemName: "gear"),
+                               state: currentState == 0 ? .on : .off) { [weak self] _ in
+            self?.handleAppearanceChange(option: 0, title: NSLocalizedString("System", comment: ""))
+        }
+        let action1 = UIAction(title: NSLocalizedString("Light", comment: ""),
+                               image: UIImage(systemName: "sun.max"),
+                               state: currentState == 1 ? .on : .off) { [weak self] _ in
+            self?.handleAppearanceChange(option: 1, title: NSLocalizedString("Light", comment: ""))
+        }
+        let action2 = UIAction(title: NSLocalizedString("Dark", comment: ""),
+                               image: UIImage(systemName: "moon"),
+                               state: currentState == 2 ? .on : .off) { [weak self] _ in
+            self?.handleAppearanceChange(option: 2, title: NSLocalizedString("Dark", comment: ""))
+        }
+        
+        let appearanceMenu = UIMenu(title: NSLocalizedString("Choose app appearance:", comment: ""), options: .singleSelection, children: [
+            UIMenu(title: "", options: .displayInline, children: [action0]),
+            action1,
+            action2
         ])
         
         let invisibleMenuTrigger = CellButtonManager(type: .custom)
         invisibleMenuTrigger.translatesAutoresizingMaskIntoConstraints = false
         invisibleMenuTrigger.showsMenuAsPrimaryAction = true
+        invisibleMenuTrigger.tag = 100
         invisibleMenuTrigger.menu = appearanceMenu
         
         cell.contentView.addSubview(invisibleMenuTrigger)
@@ -577,34 +572,21 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         }
     }
     
-    var accentColorButtonMenuItem0 = UIAction(title: "System", image: UIImage(systemName: "gear"), handler: { _ in
-        UserDefaults.standard.set(0, forKey: "accentColorOption")
-    })
-    var accentColorButtonMenuItem1 = UIAction(title: "Automatic", image: UIImage(systemName: "sparkle"), state: .on, handler: { _ in
-        UserDefaults.standard.set(1, forKey: "accentColorOption")
-    })
-    var accentColorButtonMenuItem2 = UIAction(title: "Green", image: UIImage(named: "1.circle.fill"), handler: { _ in
-        UserDefaults.standard.set(2, forKey: "accentColorOption")
-    })
-    var accentColorButtonMenuItem3 = UIAction(title: "Orange", image: UIImage(named: "2.circle.fill"), handler: { _ in
-        UserDefaults.standard.set(3, forKey: "accentColorOption")
-    })
-    var accentColorButtonMenuItem4 = UIAction(title: "Purple", image: UIImage(named: "3.circle.fill"), handler: { _ in
-        UserDefaults.standard.set(4, forKey: "accentColorOption")
-    })
-    var accentColorButtonMenuItem5 = UIAction(title: "Red", image: UIImage(named: "4.circle.fill"), handler: { _ in
-        UserDefaults.standard.set(5, forKey: "accentColorOption")
-    })
-    var accentColorButtonMenuItem6 = UIAction(title: "Blue", image: UIImage(named: "5.circle.fill"), handler: { _ in
-        UserDefaults.standard.set(6, forKey: "accentColorOption")
-    })
+    private func handleAccentColorChange(option: Int, title: String) {
+        UserDefaults.standard.set(option, forKey: "accentColorOption")
+        UserDefaults.standard.set(title, forKey: "accentColorString")
+        UserDefaults.standard.set(option, forKey: "accentColorActionState")
+        
+        NotificationCenter.default.post(name: Notification.Name("tintColorChanged"), object: nil)
+        accentColorButton.setNeedsUpdateConfiguration()
+    }
     
     func accentColorButton(in cell: UITableViewCell) {
         accentColorButton.translatesAutoresizingMaskIntoConstraints = false
         accentColorButton.isUserInteractionEnabled = false
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString("Automatic")
+        var languageTitle = AttributedString(UserDefaults.standard.string(forKey: "accentColorString") ?? NSLocalizedString("Automatic", comment: ""))
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
@@ -613,26 +595,66 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         config.imagePlacement = .trailing
         config.imagePadding = 4
         config.baseForegroundColor = .cellAccessory
+        
+        accentColorButton.configurationUpdateHandler = { button in
+            var currentConfig = button.configuration ?? UIButton.Configuration.plain()
+            currentConfig.attributedTitle = AttributedString(UserDefaults.standard.string(forKey: "accentColorString") ?? NSLocalizedString("Automatic", comment: ""))
+            currentConfig.attributedTitle?.font = .systemFont(ofSize: 16, weight: .medium)
+            button.configuration = currentConfig
+        }
         accentColorButton.configuration = config
-                
+        
         cell.contentView.addSubview(accentColorButton)
         NSLayoutConstraint.activate([
             accentColorButton.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -8),
             accentColorButton.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor)
         ])
         
-        let colorMenu = UIMenu(title: "Choose accent color:", options: .singleSelection, children: [
-            UIMenu(title: "", options: .displayInline, children: [accentColorButtonMenuItem0, accentColorButtonMenuItem1]),
-            accentColorButtonMenuItem2,
-            accentColorButtonMenuItem3,
-            accentColorButtonMenuItem4,
-            accentColorButtonMenuItem5,
-            accentColorButtonMenuItem6
+        let currentState = UserDefaults.standard.integer(forKey: "accentColorActionState")
+        let action0 = UIAction(title: NSLocalizedString("Automatic", comment: ""),
+                               image: UIImage(systemName: "sparkle"),
+                               state: currentState == 0 ? .on : .off) { [weak self] _ in
+            self?.handleAccentColorChange(option: 0, title: NSLocalizedString("Automatic", comment: ""))
+        }
+        let action1 = UIAction(title: NSLocalizedString("Green", comment: ""),
+                               image: UIImage(named: "1.circle.fill"),
+                               state: currentState == 1 ? .on : .off) { [weak self] _ in
+            self?.handleAccentColorChange(option: 1, title: NSLocalizedString("Green", comment: ""))
+        }
+        let action2 = UIAction(title: NSLocalizedString("Orange", comment: ""),
+                               image: UIImage(named: "2.circle.fill"),
+                               state: currentState == 2 ? .on : .off) { [weak self] _ in
+            self?.handleAccentColorChange(option: 2, title: NSLocalizedString("Orange", comment: ""))
+        }
+        let action3 = UIAction(title: NSLocalizedString("Purple", comment: ""),
+                               image: UIImage(named: "3.circle.fill"),
+                               state: currentState == 3 ? .on : .off) { [weak self] _ in
+            self?.handleAccentColorChange(option: 3, title: NSLocalizedString("Purple", comment: ""))
+        }
+        let action4 = UIAction(title: NSLocalizedString("Red", comment: ""),
+                               image: UIImage(named: "4.circle.fill"),
+                               state: currentState == 4 ? .on : .off) { [weak self] _ in
+            self?.handleAccentColorChange(option: 4, title: NSLocalizedString("Red", comment: ""))
+        }
+        let action5 = UIAction(title: NSLocalizedString("Blue", comment: ""),
+                               image: UIImage(named: "5.circle.fill"),
+                               state: currentState == 5 ? .on : .off) { [weak self] _ in
+            self?.handleAccentColorChange(option: 5, title: NSLocalizedString("Blue", comment: ""))
+        }
+        
+        let colorMenu = UIMenu(title: NSLocalizedString("Choose accent color:", comment: ""), options: .singleSelection, children: [
+            UIMenu(title: "", options: .displayInline, children: [action0]),
+            action1,
+            action2,
+            action3,
+            action4,
+            action5,
         ])
         
         let invisibleMenuTrigger = CellButtonManager(type: .custom)
         invisibleMenuTrigger.translatesAutoresizingMaskIntoConstraints = false
         invisibleMenuTrigger.showsMenuAsPrimaryAction = true
+        invisibleMenuTrigger.tag = 100
         invisibleMenuTrigger.menu = colorMenu
         
         cell.contentView.addSubview(invisibleMenuTrigger)
@@ -651,7 +673,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     func landscapeModeSwitch(in cell: UITableViewCell) {
         landscapeModeSwitch.translatesAutoresizingMaskIntoConstraints = false
-        landscapeModeSwitch.isOn = UserDefaults.standard.bool(forKey: "landscapeModeSwitchState")
+        landscapeModeSwitch.isOn = UserDefaults.standard.bool(forKey: "landscapeModeSwitch")
         landscapeModeSwitch.addTarget(self, action: #selector(landscapeModeSwitchChanged(_:)), for: .valueChanged)
         
         cell.addSubview(landscapeModeSwitch)
@@ -662,17 +684,14 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     }
     
     @objc func landscapeModeSwitchChanged(_ sender: UISwitch) {
-        if sender.isOn {
-            UserDefaults.standard.set(true, forKey: "landscapeModeSwitch")
-        } else {
-            UserDefaults.standard.set(false, forKey: "landscapeModeSwitch")
-        }
+        UserDefaults.standard.set(sender.isOn, forKey: "landscapeModeSwitch")
+        self.window?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
     }
     
     //
     func backgroundAnimationSwitch(in cell: UITableViewCell) {
         backgroundAnimationSwitch.translatesAutoresizingMaskIntoConstraints = false
-        backgroundAnimationSwitch.isOn = UserDefaults.standard.bool(forKey: "landscapeModeSwitchState")
+        backgroundAnimationSwitch.isOn = UserDefaults.standard.bool(forKey: "backgroundAnimationSwitch")
         backgroundAnimationSwitch.addTarget(self, action: #selector(backgroundAnimationSwitchChanged(_:)), for: .valueChanged)
         
         cell.addSubview(backgroundAnimationSwitch)
@@ -683,11 +702,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     }
     
     @objc func backgroundAnimationSwitchChanged(_ sender: UISwitch) {
-        if sender.isOn {
-            UserDefaults.standard.set(true, forKey: "backgroundAnimationSwitch")
-        } else {
-            UserDefaults.standard.set(false, forKey: "backgroundAnimationSwitch")
-        }
+        UserDefaults.standard.set(sender.isOn, forKey: "backgroundAnimationSwitch")
     }
     
     
@@ -695,7 +710,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     func hapticSwitch(in cell: UITableViewCell) {
         hapticSwitch.translatesAutoresizingMaskIntoConstraints = false
-        hapticSwitch.isOn = UserDefaults.standard.bool(forKey: "HapticSwitchState")
+        hapticSwitch.isOn = UserDefaults.standard.bool(forKey: "hapticSwitch")
         hapticSwitch.addTarget(self, action: #selector(hapticSwitchChanged(_:)), for: .valueChanged)
         
         cell.addSubview(hapticSwitch)
@@ -706,11 +721,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     }
     
     @objc func hapticSwitchChanged(_ sender: UISwitch) {
-        if sender.isOn {
-            UserDefaults.standard.set(true, forKey: "hapticSwitch")
-        } else {
-            UserDefaults.standard.set(false, forKey: "hapticSwitch")
-        }
+        UserDefaults.standard.set(sender.isOn, forKey: "hapticSwitch")
     }
     
     func appLanguageButton(in cell: UITableViewCell) {
@@ -718,7 +729,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         appLanguageButton.isUserInteractionEnabled = false
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString("English")
+        var languageTitle = AttributedString(NSLocalizedString("English", comment: ""))
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         

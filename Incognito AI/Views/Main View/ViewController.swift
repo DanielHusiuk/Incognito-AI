@@ -72,10 +72,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         super.viewDidLoad()
         backgroundSetup()
         collectionViewSetup()
+        loadWelcomeView()
         
         loadTopView()
         loadBottomView()
-        loadWelcomeView()
         
         loadUserDefaults()
         loadNotifications()
@@ -98,10 +98,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        self.updateBlurVisibility(for: self.messagesCollectionView)
         DispatchQueue.main.async {
             self.loadShadows()
             self.keyboardSwipeDownAnimation()
+            self.updateWelcomeStack()
         }
     }
     
@@ -113,7 +113,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         DispatchQueue.main.async {
             self.messagesCollectionView.layoutIfNeeded()
             self.updateScrollDownButton()
-            self.updateBlurVisibility(for: self.messagesCollectionView)
         }
     }
     
@@ -240,11 +239,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                 resizeTextView(fieldText)
                 collectionViewLayout()
                 messagesCollectionView.layoutIfNeeded()
-                welcomeCenterStack.alpha = 1
             } else {
                 resizeTextView(fieldText)
                 messagesCollectionView.layoutIfNeeded()
-                welcomeCenterStack.alpha = 0
             }
         }
     }
@@ -286,11 +283,21 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     func updateWelcomeStack() {
         let hasMessages = messagesCollectionView.messages.count > 0
-        let shouldHide = hasMessages || fieldText.isEditing
+        let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+        let orientation = windowScene!.interfaceOrientation
+        let pickerNotVisible = aiPickerView.alpha == 1
+        let shouldHide = hasMessages || fieldText.isEditing || orientation.isLandscape || pickerNotVisible
         
         UIView.animate(withDuration: 0.2, animations: {
             self.welcomeCenterStack.alpha = shouldHide ? 0 : 1
         })
+    }
+    
+    func updateWelcomeStackNetwork(_ isAvailable: Bool) {
+        welcomeButtonStack.isUserInteractionEnabled = isAvailable
+        for button in welcomeButtons {
+            button.isEnabled = false
+        }
     }
     
     func welcomeTextStackSetup() {
@@ -302,7 +309,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     func welcomeLabelSetup() {
-        welcomeLabel.text = "Incognito AI"
+        welcomeLabel.text = NSLocalizedString("Incognito AI", comment: "")
         welcomeLabel.textColor = .white
         welcomeLabel.textAlignment = .center
         welcomeLabel.font = UIFont.systemFont(ofSize: 32, weight: .heavy)
@@ -311,7 +318,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     func welcomeDescriptionSetup() {
-        welcomeDescription.text = "Where should we start?"
+        welcomeDescription.text = NSLocalizedString("Where should we start?", comment: "")
         welcomeDescription.textColor = .lightText
         welcomeDescription.textAlignment = .center
         welcomeDescription.font = UIFont.systemFont(ofSize: 18, weight: .medium)
@@ -320,9 +327,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     let welcomeButtonTitle: [String] = [
-        "What this app can do?",
-        "Which AI models are available?",
-        "Why is there a daily request limit?"
+        NSLocalizedString("What this app can do?", comment: ""),
+        NSLocalizedString("Which AI models are available?", comment: ""),
+        NSLocalizedString("Why is there a daily request limit?", comment: "")
     ]
     
     func welcomeButtonStackSetup() {
@@ -397,20 +404,21 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isConnected in
                 self?.updateUINetworkStatus(isConnected)
+                self?.updateWelcomeStackNetwork(isConnected)
             }
             .store(in: &cancellables)
     }
     
     private func updateUINetworkStatus(_ isAvailable: Bool) {
         fieldText.isUserInteractionEnabled = isAvailable
-        fieldPlaceholder.text = isAvailable ? "Ask AI anything..." : "Internet connection is lost."
+        fieldPlaceholder.text = isAvailable ? NSLocalizedString("Ask AI anything...", comment: "") : NSLocalizedString("Internet connection is lost.", comment: "")
         
         sendButton.setImage(UIImage(systemName: isAvailable ? "arrow.up" : "wifi.slash"), for: .normal)
         sendButton.isUserInteractionEnabled = isAvailable
         
         if previousNetworkState != nil && previousNetworkState == true && isAvailable == false {
-            let networkAlert = UIAlertController(title: "No internet connection", message: "Please check your internet connection.", preferredStyle: .alert)
-            networkAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            let networkAlert = UIAlertController(title: NSLocalizedString("No internet connection", comment: ""), message: NSLocalizedString("Please check your internet connection.", comment: ""), preferredStyle: .alert)
+            networkAlert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
             self.present(networkAlert, animated: true, completion: nil)
         }
         
@@ -419,7 +427,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     
     private func userNotification(title: String, message: String) {
         let errorAlert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+        errorAlert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
         self.present(errorAlert, animated: true, completion: nil)
     }
     
@@ -441,12 +449,39 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         messagesCollectionView.onNewConversation = { [weak self] resendText in
             guard let self = self else { return }
-            UserDefaults.standard.set(resendText, forKey: "newConversationMessage")
-            newChatButton.sendActions(for: .touchUpInside)
-            pendingSendText = UserDefaults.standard.string(forKey: "newConversationMessage")
-            sendButton.sendActions(for: .touchUpInside)
-            UserDefaults.standard.removeObject(forKey: "newConversationMessage")
+            
+            let startFreshConversation = {
+                self.messagesCollectionView.messages.removeAll()
+                self.messagesCollectionView.reloadData()
+                self.updateWelcomeStack()
+                
+                DispatchQueue.main.async {
+                    self.pendingSendText = resendText
+                    self.sendButton.sendActions(for: .touchUpInside)
+                }
+            }
+            
+            if UserDefaults.standard.bool(forKey: "confirmChatSwitch") {
+                let resetAlert = UIAlertController(title: NSLocalizedString("Create new chat?", comment: ""), message: NSLocalizedString("Confirm to create new chat. All your previous messages will be deleted.", comment: ""), preferredStyle: .alert)
+                let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel, handler: nil)
+                resetAlert.addAction(cancelAction)
+                
+                resetAlert.addAction(UIAlertAction(title: NSLocalizedString("Confirm", comment: ""), style: .destructive, handler: { _ in
+                    if UserDefaults.standard.bool(forKey: "hapticSwitch") {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    }
+                    startFreshConversation()
+                }))
+                self.present(resetAlert, animated: true, completion: nil)
+                
+            } else {
+                if UserDefaults.standard.bool(forKey: "hapticSwitch") {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }
+                startFreshConversation()
+            }
         }
+        
         
         view.addSubview(messagesCollectionView)
         NSLayoutConstraint.activate([
@@ -460,7 +495,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         guard scrollView == messagesCollectionView else { return }
         updateScrollDownButton()
-        updateBlurVisibility(for: scrollView)
         self.view.layoutIfNeeded()
     }
     
@@ -601,33 +635,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         self.bottomBlurHostingController = hostingController
     }
     
-    func updateBlurVisibility(for scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        let boundsHeight = scrollView.bounds.height
-        let insets = scrollView.adjustedContentInset
-        let fadeDistance: CGFloat = 30
-        
-        let minOffsetY = -insets.top
-        let distanceFromTop = offsetY - minOffsetY
-        let topAlpha = max(0, min(1, distanceFromTop / fadeDistance))
-        
-        let maxOffsetY = max(minOffsetY, contentHeight + insets.bottom - boundsHeight)
-        let distanceFromBottom = maxOffsetY - offsetY
-        
-        let bottomAlpha: CGFloat
-        if contentHeight + insets.top + insets.bottom <= boundsHeight {
-            bottomAlpha = 0
-        } else {
-            bottomAlpha = max(0, min(1, distanceFromBottom / fadeDistance))
-        }
-        
-        UIView.animate(withDuration: 0.15, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction], animations: {
-            self.topBlurHostingController?.view.alpha = topAlpha
-            self.bottomBlurHostingController?.view.alpha = bottomAlpha
-        }, completion: nil)
-    }
-    
     
     //MARK: - Top Stack View
     
@@ -735,7 +742,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             self.newChatButton.isHighlighted = false
         })
         guard messagesCollectionView.messages.count > 0 else {
-            let notificationAlert = UIAlertController(title: "Unable to create new chat", message: "Chat already empty", preferredStyle: .alert)
+            let notificationAlert = UIAlertController(title: NSLocalizedString("Unable to create new chat", comment: ""), message: NSLocalizedString("Chat already empty", comment: ""), preferredStyle: .alert)
             let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
             notificationAlert.addAction(okAction)
             
@@ -744,10 +751,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         }
         
         if UserDefaults.standard.bool(forKey: "confirmChatSwitch") == true {
-            let resetAlert = UIAlertController(title: "Create new chat?", message: "Confirm to create new chat. All your previous messages will be deleted.", preferredStyle: .alert)
-            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+            let resetAlert = UIAlertController(title: NSLocalizedString("Create new chat?", comment: ""), message: NSLocalizedString("Confirm to create new chat. All your previous messages will be deleted.", comment: ""), preferredStyle: .alert)
+            let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel, handler: nil)
             resetAlert.addAction(cancelAction)
-            resetAlert.addAction(UIAlertAction(title: "Confirm", style: .destructive, handler: { [weak self] (action: UIAlertAction!) in
+            resetAlert.addAction(UIAlertAction(title: NSLocalizedString("Confirm", comment: ""), style: .destructive, handler: { [weak self] (action: UIAlertAction!) in
                 self!.messagesCollectionView.messages.removeAll()
                 self!.messagesCollectionView.reloadData()
                 self!.updateWelcomeStack()
@@ -852,7 +859,6 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         let orientation = windowScene.interfaceOrientation
         
         if orientation.isLandscape && !aiPickerView.isHidden {
-            print("close")
             closeAiPickerView()
         }
         
@@ -1098,8 +1104,10 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             })
             
             startAiPickerTimer()
+            updateWelcomeStack()
         } else {
             closeAiPickerView()
+            updateWelcomeStack()
         }
     }
     
@@ -1138,6 +1146,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         }) { _ in
             self.aiPickerView.isHidden = true
         }
+        updateWelcomeStack()
     }
     
     
@@ -1237,6 +1246,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             let isSelected = (button.model?.id == sender.model?.id)
             button.setSelected(isSelected)
         }
+        updateWelcomeStack()
     }
     
     @objc func handleButtonTap(_ notification: Notification) {
@@ -1349,7 +1359,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
                 guard let self = self else { return }
                 
                 if let error = errorMessage {
-                    self.userNotification(title: "Error", message: error)
+                    self.userNotification(title: NSLocalizedString("Error", comment: ""), message: error)
                     self.loadingIndicator.stopAnimating()
                     self.sendButton.isUserInteractionEnabled = true
                     self.sendButton.setImage(UIImage(systemName: "arrow.up"), for: .normal)
@@ -1389,8 +1399,8 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
             fieldText.endEditing(true)
             UserDefaults.standard.set(false, forKey: "isEditing")
             
-            let limitAlert = UIAlertController(title: "Daily Limit", message: "You have exceeded your daily limit of requests.\n\nChange model or come back tomorrow!", preferredStyle: .alert)
-            limitAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            let limitAlert = UIAlertController(title: NSLocalizedString("Daily Limit", comment: ""), message: NSLocalizedString("You have exceeded your daily limit of requests.\n\nChange model or come back tomorrow!", comment: ""), preferredStyle: .alert)
+            limitAlert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
             self.present(limitAlert, animated: true, completion: nil)
         }
         

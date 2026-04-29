@@ -26,8 +26,13 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
     
     let settingsTableView = SettingsTableView()
     
+    var settingsTitleTopConstraintValue: CGFloat = .init(18)
+    var settingsNavigationButtonPositiveConstraintValue: CGFloat = .init(16)
+    var settingsNavigationButtonNegativeConstraintValue: CGFloat = .init(-16)
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        loadConstraintsValues()
         backgroundSetup()
         backgroundGradientViewSetup()
         
@@ -44,12 +49,16 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
         loadNotifications()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        settingsTableView.updateSettingsPreferences()
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         backgroundGradientSetup()
         navigationGradientSetup()
         bottomGradientSetup()
-        settingsTableView.updatePreferences()
         
         ShadowManager().applyShadow(to: closeSettingsButton, opacity: 0.1, shadowRadius: 10, viewBounds: closeSettingsButton.bounds.insetBy(dx: 0, dy: 3))
         ShadowManager().applyShadow(to: resetSettingsButton, opacity: 0.1, shadowRadius: 10, viewBounds: resetSettingsButton.bounds.insetBy(dx: 0, dy: 3))
@@ -68,6 +77,18 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
         NotificationCenter.default.addObserver(self, selector: #selector(sendReportBugEmail), name: Notification.Name(rawValue: "reportBug"), object: nil)
     }
     
+    func loadConstraintsValues() {
+        if #available(iOS 26, *) {
+            settingsTitleTopConstraintValue = 20
+            settingsNavigationButtonPositiveConstraintValue = 16
+            settingsNavigationButtonNegativeConstraintValue = -16
+        } else {
+            settingsTitleTopConstraintValue = 18
+            settingsNavigationButtonPositiveConstraintValue = 13
+            settingsNavigationButtonNegativeConstraintValue = -13
+        }
+    }
+    
     
     //MARK: - Background
     
@@ -79,17 +100,20 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
         backgroundView.isUserInteractionEnabled = false
         backgroundView.backgroundColor = .systemGroupedBackground
         backgroundView.clipsToBounds = true
-        backgroundView.layer.cornerRadius = 30
-        backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        backgroundView.layer.borderColor = UIColor.sheetBorder.cgColor
-        backgroundView.layer.borderWidth = 2
+        
+        if #unavailable(iOS 26) {
+            backgroundView.layer.cornerRadius = 30
+            backgroundView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+            backgroundView.layer.borderColor = UIColor.sheetBorder.cgColor
+            backgroundView.layer.borderWidth = 2
+        }
         view.addSubview(backgroundView)
         
         NSLayoutConstraint.activate([
             backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 2),
-            backgroundView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            backgroundView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+            backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
     
@@ -212,14 +236,14 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
     
     func titleSetup() {
         settingsTitle.translatesAutoresizingMaskIntoConstraints = false
-        settingsTitle.text = "Settings"
+        settingsTitle.text = NSLocalizedString("Settings", comment: "")
         settingsTitle.textColor = .label
         settingsTitle.textAlignment = .center
         settingsTitle.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
         view.addSubview(settingsTitle)
         
         NSLayoutConstraint.activate([
-            settingsTitle.topAnchor.constraint(equalTo: navigationView.topAnchor, constant: 18),
+            settingsTitle.topAnchor.constraint(equalTo: navigationView.topAnchor, constant: settingsTitleTopConstraintValue),
             settingsTitle.centerXAnchor.constraint(equalTo: navigationView.centerXAnchor)
         ])
     }
@@ -238,8 +262,8 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
         
         view.addSubview(closeSettingsButton)
         NSLayoutConstraint.activate([
-            closeSettingsButton.topAnchor.constraint(equalTo: navigationView.topAnchor, constant: 13),
-            closeSettingsButton.leadingAnchor.constraint(equalTo: navigationView.leadingAnchor, constant: 13),
+            closeSettingsButton.topAnchor.constraint(equalTo: navigationView.topAnchor, constant: settingsNavigationButtonPositiveConstraintValue),
+            closeSettingsButton.leadingAnchor.constraint(equalTo: navigationView.leadingAnchor, constant: settingsNavigationButtonPositiveConstraintValue),
             closeSettingsButton.widthAnchor.constraint(equalToConstant: 30),
             closeSettingsButton.heightAnchor.constraint(equalToConstant: 30)
         ])
@@ -277,8 +301,8 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
         
         view.addSubview(resetSettingsButton)
         NSLayoutConstraint.activate([
-            resetSettingsButton.topAnchor.constraint(equalTo: navigationView.topAnchor, constant: 13),
-            resetSettingsButton.trailingAnchor.constraint(equalTo: navigationView.trailingAnchor, constant: -13),
+            resetSettingsButton.topAnchor.constraint(equalTo: navigationView.topAnchor, constant: settingsNavigationButtonPositiveConstraintValue),
+            resetSettingsButton.trailingAnchor.constraint(equalTo: navigationView.trailingAnchor, constant: settingsNavigationButtonNegativeConstraintValue),
             resetSettingsButton.widthAnchor.constraint(equalToConstant: 30),
             resetSettingsButton.heightAnchor.constraint(equalToConstant: 30)
         ])
@@ -299,11 +323,13 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
             self.resetSettingsButton.alpha = 1
         })
         
-        let resetAlert = UIAlertController(title: "Reset Settings?", message: "This will reset all settings parameters to default. This action cannot be undone.", preferredStyle: .alert)
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        let resetAlert = UIAlertController(title: NSLocalizedString("Reset Settings?", comment: ""), message: NSLocalizedString("This will reset all settings parameters to default. This action cannot be undone.", comment: ""), preferredStyle: .alert)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel, handler: nil)
         resetAlert.addAction(cancelAction)
-        resetAlert.addAction(UIAlertAction(title: "Reset", style: .destructive, handler: { [weak self] (action: UIAlertAction!) in
-            self?.settingsTableView.resetPreferences()
+        resetAlert.addAction(UIAlertAction(title: NSLocalizedString("Reset", comment: ""), style: .destructive, handler: { [weak self] (action: UIAlertAction!) in
+            SettingsManager.resetSettingsToDefaults()
+            self?.settingsTableView.updateSettingsPreferences()
+            self?.settingsTableView.reloadData()
             UIView.transition(with: self!.settingsTableView, duration: 0.15, options: .transitionCrossDissolve, animations: {self!.settingsTableView.reloadData()}, completion: nil)
         }))
         present(resetAlert, animated: true, completion: nil)
@@ -337,9 +363,9 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
     }
     
     @objc func showGitAlert() {
-        let gitAlert = UIAlertController(title: "Open developer's GitHub?", message: "https://github.com/DanielHusiuk", preferredStyle: .alert)
-        gitAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        let confirmAction = UIAlertAction(title: "Confirm", style: .default, handler: { [weak self] (action: UIAlertAction!) in
+        let gitAlert = UIAlertController(title: NSLocalizedString("Open developer's GitHub?", comment: ""), message: "https://github.com/DanielHusiuk", preferredStyle: .alert)
+        gitAlert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel, handler: nil))
+        let confirmAction = UIAlertAction(title: NSLocalizedString("Confirm", comment: ""), style: .default, handler: { [weak self] (action: UIAlertAction!) in
             guard self != nil else { return }
             
             if let gitURL = URL(string: "https://github.com/DanielHusiuk") {
@@ -351,8 +377,8 @@ class SettingsViewController: UIViewController, MFMailComposeViewControllerDeleg
     }
     
     func networkErrorAlert() {
-        let networkAlert = UIAlertController(title: "No internet connection", message: "Please check your internet connection.", preferredStyle: .alert)
-        networkAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        let networkAlert = UIAlertController(title: NSLocalizedString("No internet connection", comment: ""), message: NSLocalizedString("Please check your internet connection.", comment: ""), preferredStyle: .alert)
+        networkAlert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default, handler: nil))
         present(networkAlert, animated: true, completion: nil)
     }
     
