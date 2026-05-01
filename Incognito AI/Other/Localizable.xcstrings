@@ -268,7 +268,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Підтвердити новий чат"
+            "value" : "Підтверджувати новий чат"
           }
         }
       }
@@ -365,22 +365,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Темний"
-          }
-        }
-      }
-    },
-    "English" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inglese"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Англійська"
           }
         }
       }
@@ -637,6 +621,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Відкрити GitHub розробника?"
+          }
+        }
+      }
+    },
+    "Open Incognito AI" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri Incognito AI"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити Incognito AI"
           }
         }
       }

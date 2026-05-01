@@ -64,6 +64,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     var loadingIndicator: UIActivityIndicatorView = .init(style: .medium)
     var pendingSendText: String?
     
+    private var leftEdgePan: UIScreenEdgePanGestureRecognizer!
+    private var rightEdgePan: UIScreenEdgePanGestureRecognizer!
+    
     private var isUserAtBottom: Bool {
         return messagesCollectionView.isRoughlyAtBottom(tolerance: 40)
     }
@@ -79,7 +82,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         loadUserDefaults()
         loadNotifications()
-        setupNetworkObservation()
+        networkObservationSetup()
+        swipeIndicatorsSetup()
+        edgePanGesturesSetup()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -200,6 +205,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         NotificationCenter.default.addObserver(self, selector: #selector(self.handleButtonTap), name: Notification.Name("pickerButtonTapped"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.handleDismissKeyboard), name: Notification.Name("hideKeyboardNotification"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.updateSwipeGesturesState), name: Notification.Name("swipeGestureChanged"), object: nil)
     }
     
     func loadShadows() {
@@ -216,6 +222,9 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         
         ShadowManager().applyShadow(to: welcomeLabel, opacity: 0.05, shadowRadius: 10, viewBounds: welcomeLabel.bounds)
         ShadowManager().applyShadow(to: welcomeDescription, opacity: 0.05, shadowRadius: 10, viewBounds: welcomeDescription.bounds)
+        
+        ShadowManager().applyShadow(to: leftSwipeBackground, opacity: 0.3, shadowRadius: 10, viewBounds: leftSwipeBackground.bounds.insetBy(dx: 0, dy: 5))
+        ShadowManager().applyShadow(to: rightSwipeBackground, opacity: 0.3, shadowRadius: 10, viewBounds: rightSwipeBackground.bounds.insetBy(dx: 0, dy: 5))
         
         for button in welcomeButtons {
             ShadowManager().applyShadow(to: button, opacity: 0.2, shadowRadius: 10, viewBounds: button.bounds.insetBy(dx: 0, dy: 5))
@@ -296,7 +305,7 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     func updateWelcomeStackNetwork(_ isAvailable: Bool) {
         welcomeButtonStack.isUserInteractionEnabled = isAvailable
         for button in welcomeButtons {
-            button.isEnabled = false
+            button.isEnabled = isAvailable
         }
     }
     
@@ -397,9 +406,81 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
     }
     
     
+    //MARK: - Swipe Gestures
+    
+    let leftSwipeBackground: UIView = {
+        let backgroundView = UIView(frame: CGRect(x: 0, y: 0, width: 150, height: 150))
+        backgroundView.backgroundColor = .black
+        backgroundView.alpha = 0
+        backgroundView.layer.cornerRadius = backgroundView.frame.height / 2
+        backgroundView.clipsToBounds = true
+        backgroundView.translatesAutoresizingMaskIntoConstraints = false
+        return backgroundView
+    }()
+    
+    let leftSwipeIndicator: UIImageView = {
+        let imageView = UIImageView(image: UIImage(systemName: "gear"))
+        imageView.tintColor = .white
+        imageView.alpha = 0
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    let rightSwipeBackground: UIView = {
+        let backgroundView = UIView(frame: CGRect(x: 0, y: 0, width: 150, height: 150))
+        backgroundView.backgroundColor = .black
+        backgroundView.alpha = 0
+        backgroundView.layer.cornerRadius = backgroundView.frame.height / 2
+        backgroundView.clipsToBounds = true
+        backgroundView.translatesAutoresizingMaskIntoConstraints = false
+        return backgroundView
+    }()
+    
+    let rightSwipeIndicator: UIImageView = {
+        let imageView = UIImageView(image: UIImage(systemName: "plus.circle"))
+        imageView.tintColor = .white
+        imageView.alpha = 0
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    let swipeThreshold: CGFloat = 80.0
+    private var hasTriggeredLeftHaptic = false
+    private var hasTriggeredRightHaptic = false
+    
+    private func swipeIndicatorsSetup() {
+        view.addSubview(leftSwipeBackground)
+        view.addSubview(leftSwipeIndicator)
+        view.addSubview(rightSwipeBackground)
+        view.addSubview(rightSwipeIndicator)
+        
+        NSLayoutConstraint.activate([
+            leftSwipeBackground.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: -125),
+            leftSwipeBackground.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            leftSwipeBackground.widthAnchor.constraint(equalToConstant: 150),
+            leftSwipeBackground.heightAnchor.constraint(equalToConstant: 150),
+            
+            leftSwipeIndicator.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: -30),
+            leftSwipeIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            leftSwipeIndicator.widthAnchor.constraint(equalToConstant: 30),
+            leftSwipeIndicator.heightAnchor.constraint(equalToConstant: 30),
+            
+            rightSwipeBackground.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 125),
+            rightSwipeBackground.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            rightSwipeBackground.widthAnchor.constraint(equalToConstant: 150),
+            rightSwipeBackground.heightAnchor.constraint(equalToConstant: 150),
+            
+            rightSwipeIndicator.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 30),
+            rightSwipeIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            rightSwipeIndicator.widthAnchor.constraint(equalToConstant: 30),
+            rightSwipeIndicator.heightAnchor.constraint(equalToConstant: 30)
+        ])
+    }
+    
+    
     //MARK: - Network Handling
     
-    private func setupNetworkObservation() {
+    private func networkObservationSetup() {
         networkManager.$hasNetworkConnection
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isConnected in
@@ -949,6 +1030,8 @@ class ViewController: UIViewController, UITextViewDelegate, UICollectionViewDele
         fieldPlaceholder.textColor = UIColor.systemGray2
         fieldPlaceholder.textAlignment = .center
         fieldPlaceholder.clipsToBounds = true
+        fieldPlaceholder.adjustsFontSizeToFitWidth = true
+        fieldPlaceholder.minimumScaleFactor = 0.6
         
         fieldPlaceholderCenterConstraint = fieldPlaceholder.centerXAnchor.constraint(equalTo: fieldView.centerXAnchor)
         fieldPlaceholderLeadingConstraint = fieldPlaceholder.leadingAnchor.constraint(equalTo: fieldText.leadingAnchor, constant: 5)
@@ -1715,5 +1798,163 @@ extension UserDefaults {
             return nil
         }
         return color
+    }
+}
+
+extension ViewController {
+    func edgePanGesturesSetup() {
+        leftEdgePan = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleLeftSwipe(_:)))
+        leftEdgePan.edges = .left
+        view.addGestureRecognizer(leftEdgePan)
+        
+        rightEdgePan = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleRightSwipe(_:)))
+        rightEdgePan.edges = .right
+        view.addGestureRecognizer(rightEdgePan)
+    }
+    
+    @objc func updateSwipeGesturesState() {
+        let gesturesOption = UserDefaults.standard.integer(forKey: "swipeGestureOption")
+        switch gesturesOption {
+        case 0:
+            leftEdgePan.isEnabled = false
+            rightEdgePan.isEnabled = false
+        case 2:
+            leftEdgePan.isEnabled = true
+            rightEdgePan.isEnabled = false
+        case 3:
+            leftEdgePan.isEnabled = false
+            rightEdgePan.isEnabled = true
+        default:
+            leftEdgePan.isEnabled = true
+            rightEdgePan.isEnabled = true
+        }
+    }
+    
+    @objc private func handleLeftSwipe(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        let translationX = gesture.translation(in: view).x
+        let progress = min(max(translationX / swipeThreshold, 0), 1)
+        
+        switch gesture.state {
+        case .began:
+            hasTriggeredLeftHaptic = false
+            leftSwipeIndicator.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            leftSwipeBackground.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            
+        case .changed:
+            leftSwipeIndicator.alpha = progress
+            leftSwipeBackground.alpha = progress - 0.1
+            
+            let scale = 0.5 + (0.5 * progress)
+            let clampedTranslationX = min(translationX, swipeThreshold)
+            let xOffset = clampedTranslationX * 0.4
+            
+            leftSwipeIndicator.transform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+            leftSwipeBackground.transform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+            
+            if progress >= 1.0 && !hasTriggeredLeftHaptic {
+                if UserDefaults.standard.bool(forKey: "hapticSwitch") {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }
+                hasTriggeredLeftHaptic = true
+                
+                UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+                    let popScale = scale - 0.1
+                    let popTransform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: popScale, y: popScale)
+                    
+                    self.leftSwipeIndicator.transform = popTransform
+                    self.leftSwipeBackground.transform = popTransform
+                } completion: { _ in
+                    UIView.animate(withDuration: 0.6, delay: 0, usingSpringWithDamping: 0.3, initialSpringVelocity: 0.8, options: [.beginFromCurrentState]) {
+                        let baseTransform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+                        
+                        self.leftSwipeIndicator.transform = baseTransform
+                        self.leftSwipeBackground.transform = baseTransform
+                    }
+                }
+            } else if progress < 1.0 {
+                hasTriggeredLeftHaptic = false
+                let baseTransform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+                leftSwipeIndicator.transform = baseTransform
+                leftSwipeBackground.transform = baseTransform
+            }
+            
+        case .ended, .cancelled:
+            if progress >= 1.0 {
+                settingsButton.sendActions(for: .touchUpInside)
+            }
+            
+            UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0, options: .curveEaseInOut) {
+                self.leftSwipeIndicator.alpha = 0
+                self.leftSwipeBackground.alpha = 0
+                self.leftSwipeIndicator.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+                self.leftSwipeBackground.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            }
+            
+        default: break
+        }
+    }
+    
+    @objc private func handleRightSwipe(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        let translationX = gesture.translation(in: view).x * -1
+        let progress = min(max(translationX / swipeThreshold, 0), 1)
+        
+        switch gesture.state {
+        case .began:
+            hasTriggeredRightHaptic = false
+            rightSwipeIndicator.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            rightSwipeBackground.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            
+        case .changed:
+            rightSwipeIndicator.alpha = progress
+            rightSwipeBackground.alpha = progress - 0.1
+            
+            let scale = 0.5 + (0.5 * progress)
+            let clampedTranslationX = min(translationX, swipeThreshold)
+            let xOffset = -clampedTranslationX * 0.4
+            
+            rightSwipeIndicator.transform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+            rightSwipeBackground.transform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+            
+            if progress >= 1.0 && !hasTriggeredRightHaptic {
+                if UserDefaults.standard.bool(forKey: "hapticSwitch") {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }
+                hasTriggeredRightHaptic = true
+                
+                UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+                    let popScale = scale - 0.1
+                    let popTransform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: popScale, y: popScale)
+                    
+                    self.rightSwipeIndicator.transform = popTransform
+                    self.rightSwipeBackground.transform = popTransform
+                } completion: { _ in
+                    UIView.animate(withDuration: 0.6, delay: 0, usingSpringWithDamping: 0.3, initialSpringVelocity: 0.8, options: [.beginFromCurrentState]) {
+                        let baseTransform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+                        
+                        self.rightSwipeIndicator.transform = baseTransform
+                        self.rightSwipeBackground.transform = baseTransform
+                    }
+                }
+            } else if progress < 1.0 {
+                hasTriggeredRightHaptic = false
+                let baseTransform = CGAffineTransform(translationX: xOffset, y: 0).scaledBy(x: scale, y: scale)
+                rightSwipeIndicator.transform = baseTransform
+                rightSwipeBackground.transform = baseTransform
+            }
+            
+        case .ended, .cancelled:
+            if progress >= 1.0 {
+                newChatButton.sendActions(for: .touchUpInside)
+            }
+            
+            UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0, options: .curveEaseInOut) {
+                self.rightSwipeIndicator.alpha = 0
+                self.rightSwipeBackground.alpha = 0
+                self.rightSwipeIndicator.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+                self.rightSwipeBackground.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            }
+            
+        default: break
+        }
     }
 }

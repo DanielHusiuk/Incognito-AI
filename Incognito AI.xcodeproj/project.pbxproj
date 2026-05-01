@@ -9,14 +9,73 @@
 /* Begin PBXBuildFile section */
 		654CB6942FA1028C0096E46C /* MarkdownKit in Frameworks */ = {isa = PBXBuildFile; productRef = 654CB6932FA1028C0096E46C /* MarkdownKit */; };
 		6555BDCC2F44B0C500524402 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 6555BDCB2F44B0C500524402 /* Settings.bundle */; };
+		65C924462FA34BBB006384CC /* ControlCenterWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 65C924302FA34BBA006384CC /* ControlCenterWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		65C9244C2FA34BD8006384CC /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 65C924342FA34BBA006384CC /* SwiftUI.framework */; };
+		65C9244D2FA34BD8006384CC /* SwiftUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 65C924342FA34BBA006384CC /* SwiftUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		65C9244F2FA34BDA006384CC /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 65C924322FA34BBA006384CC /* WidgetKit.framework */; };
+		65C924502FA34BDA006384CC /* WidgetKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 65C924322FA34BBA006384CC /* WidgetKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		65C924442FA34BBB006384CC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 650B2FFB2E72E95C000CBAD3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 65C9242F2FA34BBA006384CC;
+			remoteInfo = ControlCenterWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		65C924472FA34BBB006384CC /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				65C924462FA34BBB006384CC /* ControlCenterWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		65C9244E2FA34BD8006384CC /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				65C9244D2FA34BD8006384CC /* SwiftUI.framework in Embed Frameworks */,
+				65C924502FA34BDA006384CC /* WidgetKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		650B30032E72E95C000CBAD3 /* Incognito AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Incognito AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6555BDCB2F44B0C500524402 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		65C924302FA34BBA006384CC /* ControlCenterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ControlCenterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		65C924322FA34BBA006384CC /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		65C924342FA34BBA006384CC /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		65C9244B2FA34BBB006384CC /* Exceptions for "ControlCenterWidget" folder in "ControlCenterWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 65C9242F2FA34BBA006384CC /* ControlCenterWidgetExtension */;
+		};
+		65C924542FA35BC2006384CC /* Exceptions for "ControlCenterWidget" folder in "Incognito AI" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ControlCenterWidgetControl.swift,
+				ControlWidgetIntent.swift,
+			);
+			target = 650B30022E72E95C000CBAD3 /* Incognito AI */;
+		};
 		65D5FB372E78093A00DAD5DE /* Exceptions for "Incognito AI" folder in "Incognito AI" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -35,6 +94,15 @@
 			path = "Incognito AI";
 			sourceTree = "<group>";
 		};
+		65C924362FA34BBA006384CC /* ControlCenterWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				65C924542FA35BC2006384CC /* Exceptions for "ControlCenterWidget" folder in "Incognito AI" target */,
+				65C9244B2FA34BBB006384CC /* Exceptions for "ControlCenterWidget" folder in "ControlCenterWidgetExtension" target */,
+			);
+			path = ControlCenterWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +114,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		65C9242D2FA34BBA006384CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				65C9244C2FA34BD8006384CC /* SwiftUI.framework in Frameworks */,
+				65C9244F2FA34BDA006384CC /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -54,6 +131,8 @@
 			children = (
 				6555BDCB2F44B0C500524402 /* Settings.bundle */,
 				650B30052E72E95C000CBAD3 /* Incognito AI */,
+				65C924362FA34BBA006384CC /* ControlCenterWidget */,
+				65C924312FA34BBA006384CC /* Frameworks */,
 				650B30042E72E95C000CBAD3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -62,8 +141,18 @@
 			isa = PBXGroup;
 			children = (
 				650B30032E72E95C000CBAD3 /* Incognito AI.app */,
+				65C924302FA34BBA006384CC /* ControlCenterWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		65C924312FA34BBA006384CC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				65C924322FA34BBA006384CC /* WidgetKit.framework */,
+				65C924342FA34BBA006384CC /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -76,10 +165,12 @@
 				650B2FFF2E72E95C000CBAD3 /* Sources */,
 				650B30002E72E95C000CBAD3 /* Frameworks */,
 				650B30012E72E95C000CBAD3 /* Resources */,
+				65C924472FA34BBB006384CC /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				65C924452FA34BBB006384CC /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				650B30052E72E95C000CBAD3 /* Incognito AI */,
@@ -92,6 +183,29 @@
 			productReference = 650B30032E72E95C000CBAD3 /* Incognito AI.app */;
 			productType = "com.apple.product-type.application";
 		};
+		65C9242F2FA34BBA006384CC /* ControlCenterWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 65C9244A2FA34BBB006384CC /* Build configuration list for PBXNativeTarget "ControlCenterWidgetExtension" */;
+			buildPhases = (
+				65C9242C2FA34BBA006384CC /* Sources */,
+				65C9242D2FA34BBA006384CC /* Frameworks */,
+				65C9242E2FA34BBA006384CC /* Resources */,
+				65C9244E2FA34BD8006384CC /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				65C924362FA34BBA006384CC /* ControlCenterWidget */,
+			);
+			name = ControlCenterWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ControlCenterWidgetExtension;
+			productReference = 65C924302FA34BBA006384CC /* ControlCenterWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -99,11 +213,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 1640;
+				LastSwiftUpdateCheck = 2610;
+				LastUpgradeCheck = 2610;
 				TargetAttributes = {
 					650B30022E72E95C000CBAD3 = {
 						CreatedOnToolsVersion = 16.4;
+					};
+					65C9242F2FA34BBA006384CC = {
+						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
@@ -127,6 +244,7 @@
 			projectRoot = "";
 			targets = (
 				650B30022E72E95C000CBAD3 /* Incognito AI */,
+				65C9242F2FA34BBA006384CC /* ControlCenterWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -140,6 +258,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		65C9242E2FA34BBA006384CC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -150,7 +275,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		65C9242C2FA34BBA006384CC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		65C924452FA34BBB006384CC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 65C9242F2FA34BBA006384CC /* ControlCenterWidgetExtension */;
+			targetProxy = 65C924442FA34BBB006384CC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		650B302D2E72E95D000CBAD3 /* Debug */ = {
@@ -224,6 +364,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -279,6 +420,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -290,6 +432,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -338,9 +481,74 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		65C924482FA34BBB006384CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVFF6W5Y6W;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ControlCenterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ControlCenterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.danielhusiuk.Incognito-AI.ControlCenterWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		65C924492FA34BBB006384CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SVFF6W5Y6W;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ControlCenterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ControlCenterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.danielhusiuk.Incognito-AI.ControlCenterWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -361,6 +569,15 @@
 			buildConfigurations = (
 				650B302D2E72E95D000CBAD3 /* Debug */,
 				650B302E2E72E95D000CBAD3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		65C9244A2FA34BBB006384CC /* Build configuration list for PBXNativeTarget "ControlCenterWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				65C924482FA34BBB006384CC /* Debug */,
+				65C924492FA34BBB006384CC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

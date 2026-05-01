@@ -14,6 +14,7 @@ class SettingsTableCell: UITableViewCell {
     var isHighlightable: Bool = true
     
     var titleLabelLeadingConstraint: NSLayoutConstraint!
+    var titleLabelTrailingConstraint: NSLayoutConstraint!
     var titleLabelCenterConstraint: NSLayoutConstraint!
     
     private var titleImageView: UIImageView = {
@@ -38,6 +39,8 @@ class SettingsTableCell: UITableViewCell {
         label.textColor = .label
         label.font = UIFont.systemFont(ofSize: 16)
         label.textAlignment = .left
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.6
         return label
     }()
     
@@ -102,10 +105,12 @@ class SettingsTableCell: UITableViewCell {
     func titleLabelSetup() {
         customCellView.addSubview(titleLabel)
         titleLabelLeadingConstraint = titleLabel.leadingAnchor.constraint(equalTo: customCellView.leadingAnchor, constant: 50)
+        titleLabelTrailingConstraint = titleLabel.trailingAnchor.constraint(equalTo: customCellView.trailingAnchor, constant: -100)
         titleLabelCenterConstraint = titleLabel.centerXAnchor.constraint(equalTo: customCellView.centerXAnchor)
         
         NSLayoutConstraint.activate([
             titleLabelLeadingConstraint,
+            titleLabelTrailingConstraint,
             titleLabel.centerYAnchor.constraint(equalTo: customCellView.centerYAnchor)
         ])
     }
@@ -120,6 +125,7 @@ class SettingsTableCell: UITableViewCell {
         
         titleLabelCenterConstraint.isActive = centered
         titleLabelLeadingConstraint.isActive = !centered
+        titleLabelTrailingConstraint.isActive = !centered
     }
     
     func cellPosition(in tableView: UITableView, at indexPath: IndexPath) -> TableCellPosition {

@@ -363,7 +363,6 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         NotificationCenter.default.post(name: Notification.Name("keyboardOnLaunchNotification"), object: nil)
     }
     
-    //
     func hideKeyboardSwitch(in cell: UITableViewCell) {
         hideKeyboardSwitch.translatesAutoresizingMaskIntoConstraints = false
         hideKeyboardSwitch.isOn = UserDefaults.standard.bool(forKey: "hideKeyboardSwitch")
@@ -384,13 +383,22 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     //MARK: - Productivity Section
     
-    private func handleSwipeGestureChange(option: Int, title: String) {
+    private func handleSwipeGestureChange(option: Int) {
         UserDefaults.standard.set(option, forKey: "swipeGestureOption")
-        UserDefaults.standard.set(title, forKey: "swipeGestureString")
         UserDefaults.standard.set(option, forKey: "swipeGestureActionState")
         
         NotificationCenter.default.post(name: Notification.Name("swipeGestureChanged"), object: nil)
         swipeGesturesButton.setNeedsUpdateConfiguration()
+    }
+    
+    private func getSwipeGestureTitle() -> String {
+        let state = UserDefaults.standard.object(forKey: "swipeGestureActionState") as? Int ?? 1
+        switch state {
+        case 0: return NSLocalizedString("None", comment: "")
+        case 2: return NSLocalizedString("Only Left", comment: "")
+        case 3: return NSLocalizedString("Only Right", comment: "")
+        default: return NSLocalizedString("Left & Right", comment: "")
+        }
     }
     
     func swipeGesturesButton(in cell: UITableViewCell) {
@@ -399,7 +407,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         swipeGesturesButton.showsMenuAsPrimaryAction = true
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString(UserDefaults.standard.string(forKey: "swipeGestureString") ?? NSLocalizedString("Left & Right", comment: ""))
+        var languageTitle = AttributedString(getSwipeGestureTitle())
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
@@ -411,7 +419,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         
         swipeGesturesButton.configurationUpdateHandler = { button in
             var currentConfig = button.configuration ?? UIButton.Configuration.plain()
-            currentConfig.attributedTitle = AttributedString(UserDefaults.standard.string(forKey: "swipeGestureString") ?? NSLocalizedString("Left & Right", comment: ""))
+            currentConfig.attributedTitle = AttributedString(self.getSwipeGestureTitle())
             currentConfig.attributedTitle?.font = .systemFont(ofSize: 16, weight: .medium)
             button.configuration = currentConfig
         }
@@ -427,22 +435,22 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         let action0 = UIAction(title: NSLocalizedString("None", comment: ""),
                                image: UIImage(systemName: "xmark"),
                                state: currentState == 0 ? .on : .off) { [weak self] _ in
-            self?.handleSwipeGestureChange(option: 0, title: NSLocalizedString("None", comment: ""))
+            self?.handleSwipeGestureChange(option: 0)
         }
         let action1 = UIAction(title: NSLocalizedString("Left & Right", comment: ""),
                                image: UIImage(systemName: "arrow.left.arrow.right"),
                                state: currentState == 1 ? .on : .off) { [weak self] _ in
-            self?.handleSwipeGestureChange(option: 1, title: NSLocalizedString("Left & Right", comment: ""))
+            self?.handleSwipeGestureChange(option: 1)
         }
         let action2 = UIAction(title: NSLocalizedString("Only Left", comment: ""),
-                               image: UIImage(systemName: "arrow.left"),
+                               image: UIImage(systemName: "arrow.right"),
                                state: currentState == 2 ? .on : .off) { [weak self] _ in
-            self?.handleSwipeGestureChange(option: 2, title: NSLocalizedString("Only Left", comment: ""))
+            self?.handleSwipeGestureChange(option: 2)
         }
         let action3 = UIAction(title: NSLocalizedString("Only Right", comment: ""),
-                               image: UIImage(systemName: "arrow.right"),
+                               image: UIImage(systemName: "arrow.left"),
                                state: currentState == 3 ? .on : .off) { [weak self] _ in
-            self?.handleSwipeGestureChange(option: 3, title: NSLocalizedString("Only Right", comment: ""))
+            self?.handleSwipeGestureChange(option: 3)
         }
         
         let swipesMenu = UIMenu(title: NSLocalizedString("Choose swipe gestures:", comment: ""), options: .singleSelection, children: [
@@ -491,13 +499,21 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
     
     //MARK: - Customisation Section
     
-    private func handleAppearanceChange(option: Int, title: String) {
+    private func handleAppearanceChange(option: Int) {
         UserDefaults.standard.set(option, forKey: "appearanceOption")
-        UserDefaults.standard.set(title, forKey: "appearanceString")
         UserDefaults.standard.set(option, forKey: "appearanceActionState")
         
         NotificationCenter.default.post(name: Notification.Name("appearanceChanged"), object: nil)
         appearanceButton.setNeedsUpdateConfiguration()
+    }
+    
+    private func getAppearanceTitle() -> String {
+        let state = UserDefaults.standard.object(forKey: "appearanceActionState") as? Int ?? 0
+        switch state {
+        case 1: return NSLocalizedString("Light", comment: "")
+        case 2: return NSLocalizedString("Dark", comment: "")
+        default: return NSLocalizedString("System", comment: "")
+        }
     }
     
     func appearanceButton(in cell: UITableViewCell) {
@@ -505,7 +521,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         appearanceButton.isUserInteractionEnabled = false
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString(UserDefaults.standard.string(forKey: "appearanceString") ?? NSLocalizedString("System", comment: ""))
+        var languageTitle = AttributedString(getAppearanceTitle())
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
@@ -517,7 +533,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         
         appearanceButton.configurationUpdateHandler = { button in
             var currentConfig = button.configuration ?? UIButton.Configuration.plain()
-            currentConfig.attributedTitle = AttributedString(UserDefaults.standard.string(forKey: "appearanceString") ?? NSLocalizedString("System", comment: ""))
+            currentConfig.attributedTitle = AttributedString(self.getAppearanceTitle())
             currentConfig.attributedTitle?.font = .systemFont(ofSize: 16, weight: .medium)
             button.configuration = currentConfig
         }
@@ -533,17 +549,17 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         let action0 = UIAction(title: NSLocalizedString("System", comment: ""),
                                image: UIImage(systemName: "gear"),
                                state: currentState == 0 ? .on : .off) { [weak self] _ in
-            self?.handleAppearanceChange(option: 0, title: NSLocalizedString("System", comment: ""))
+            self?.handleAppearanceChange(option: 0)
         }
         let action1 = UIAction(title: NSLocalizedString("Light", comment: ""),
                                image: UIImage(systemName: "sun.max"),
                                state: currentState == 1 ? .on : .off) { [weak self] _ in
-            self?.handleAppearanceChange(option: 1, title: NSLocalizedString("Light", comment: ""))
+            self?.handleAppearanceChange(option: 1)
         }
         let action2 = UIAction(title: NSLocalizedString("Dark", comment: ""),
                                image: UIImage(systemName: "moon"),
                                state: currentState == 2 ? .on : .off) { [weak self] _ in
-            self?.handleAppearanceChange(option: 2, title: NSLocalizedString("Dark", comment: ""))
+            self?.handleAppearanceChange(option: 2)
         }
         
         let appearanceMenu = UIMenu(title: NSLocalizedString("Choose app appearance:", comment: ""), options: .singleSelection, children: [
@@ -572,13 +588,24 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         }
     }
     
-    private func handleAccentColorChange(option: Int, title: String) {
+    private func handleAccentColorChange(option: Int) {
         UserDefaults.standard.set(option, forKey: "accentColorOption")
-        UserDefaults.standard.set(title, forKey: "accentColorString")
         UserDefaults.standard.set(option, forKey: "accentColorActionState")
         
         NotificationCenter.default.post(name: Notification.Name("tintColorChanged"), object: nil)
         accentColorButton.setNeedsUpdateConfiguration()
+    }
+    
+    private func getAccentColorTitle() -> String {
+        let state = UserDefaults.standard.object(forKey: "accentColorActionState") as? Int ?? 0
+        switch state {
+        case 1: return NSLocalizedString("Green", comment: "")
+        case 2: return NSLocalizedString("Orange", comment: "")
+        case 3: return NSLocalizedString("Purple", comment: "")
+        case 4: return NSLocalizedString("Red", comment: "")
+        case 5: return NSLocalizedString("Blue", comment: "")
+        default: return NSLocalizedString("Automatic", comment: "")
+        }
     }
     
     func accentColorButton(in cell: UITableViewCell) {
@@ -586,7 +613,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         accentColorButton.isUserInteractionEnabled = false
         
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString(UserDefaults.standard.string(forKey: "accentColorString") ?? NSLocalizedString("Automatic", comment: ""))
+        var languageTitle = AttributedString(getAccentColorTitle())
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
@@ -598,7 +625,7 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         
         accentColorButton.configurationUpdateHandler = { button in
             var currentConfig = button.configuration ?? UIButton.Configuration.plain()
-            currentConfig.attributedTitle = AttributedString(UserDefaults.standard.string(forKey: "accentColorString") ?? NSLocalizedString("Automatic", comment: ""))
+            currentConfig.attributedTitle = AttributedString(self.getAccentColorTitle())
             currentConfig.attributedTitle?.font = .systemFont(ofSize: 16, weight: .medium)
             button.configuration = currentConfig
         }
@@ -614,32 +641,32 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         let action0 = UIAction(title: NSLocalizedString("Automatic", comment: ""),
                                image: UIImage(systemName: "sparkle"),
                                state: currentState == 0 ? .on : .off) { [weak self] _ in
-            self?.handleAccentColorChange(option: 0, title: NSLocalizedString("Automatic", comment: ""))
+            self?.handleAccentColorChange(option: 0)
         }
         let action1 = UIAction(title: NSLocalizedString("Green", comment: ""),
                                image: UIImage(named: "1.circle.fill"),
                                state: currentState == 1 ? .on : .off) { [weak self] _ in
-            self?.handleAccentColorChange(option: 1, title: NSLocalizedString("Green", comment: ""))
+            self?.handleAccentColorChange(option: 1)
         }
         let action2 = UIAction(title: NSLocalizedString("Orange", comment: ""),
                                image: UIImage(named: "2.circle.fill"),
                                state: currentState == 2 ? .on : .off) { [weak self] _ in
-            self?.handleAccentColorChange(option: 2, title: NSLocalizedString("Orange", comment: ""))
+            self?.handleAccentColorChange(option: 2)
         }
         let action3 = UIAction(title: NSLocalizedString("Purple", comment: ""),
                                image: UIImage(named: "3.circle.fill"),
                                state: currentState == 3 ? .on : .off) { [weak self] _ in
-            self?.handleAccentColorChange(option: 3, title: NSLocalizedString("Purple", comment: ""))
+            self?.handleAccentColorChange(option: 3)
         }
         let action4 = UIAction(title: NSLocalizedString("Red", comment: ""),
                                image: UIImage(named: "4.circle.fill"),
                                state: currentState == 4 ? .on : .off) { [weak self] _ in
-            self?.handleAccentColorChange(option: 4, title: NSLocalizedString("Red", comment: ""))
+            self?.handleAccentColorChange(option: 4)
         }
         let action5 = UIAction(title: NSLocalizedString("Blue", comment: ""),
                                image: UIImage(named: "5.circle.fill"),
                                state: currentState == 5 ? .on : .off) { [weak self] _ in
-            self?.handleAccentColorChange(option: 5, title: NSLocalizedString("Blue", comment: ""))
+            self?.handleAccentColorChange(option: 5)
         }
         
         let colorMenu = UIMenu(title: NSLocalizedString("Choose accent color:", comment: ""), options: .singleSelection, children: [
@@ -728,8 +755,16 @@ class SettingsTableView: UITableView, UITableViewDelegate, UITableViewDataSource
         appLanguageButton.translatesAutoresizingMaskIntoConstraints = false
         appLanguageButton.isUserInteractionEnabled = false
         
+        let currentLanguageCode = Bundle.main.preferredLocalizations.first ?? "en"
+        let languageNames: [String: String] = [
+            "en" : "English",
+            "uk" : "Українська",
+            "it" : "Italiano"
+        ]
+        let displayTitle = languageNames[currentLanguageCode] ?? "English"
+        
         var config = UIButton.Configuration.plain()
-        var languageTitle = AttributedString(NSLocalizedString("English", comment: ""))
+        var languageTitle = AttributedString("\(displayTitle)")
         languageTitle.font = .systemFont(ofSize: 16, weight: .medium)
         config.attributedTitle = languageTitle
         
